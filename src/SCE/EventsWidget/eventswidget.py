@@ -9,17 +9,20 @@ import sys
 try:
     #Path when import for project Openshot
     from src.SCE.EventsWidget.ui_eventswidget import Ui_EventsWidget
-    from PyQt5.QtWidgets import QApplication, QWidget, QTableWidget, QComboBox, QPushButton, QHeaderView, QColorDialog, QMessageBox, QShortcut
-    from PyQt5.QtGui import QKeySequence
+    from PyQt5.QtWidgets import *
+    from PyQt5.QtGui import *
+    from PyQt5.QtCore import *
 except ImportError:
     #Path when import for QtCreator (laungh this project)
     from ui_eventswidget import Ui_EventsWidget
-    from PySide6.QtWidgets import QApplication, QWidget, QTableWidget, QComboBox, QPushButton, QHeaderView, QColorDialog, QMessageBox
-    from PySide6.QtGui import QKeySequence, QShortcut
+    from PySide6.QtWidgets import *
+    from PySide6.QtGui import *
+    from PySide6.QtCore import *
 
 
 
 INDEX_COLUMN_COLOR = 0
+INDEX_COLUMN_SHORTCUT = 1
 INDEX_COLUMN_CATEGORIES = 2
 
 
