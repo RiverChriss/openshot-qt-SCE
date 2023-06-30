@@ -9,11 +9,13 @@ import sys
 try:
     #Path when import for project Openshot
     from src.SCE.EventsWidget.ui_eventswidget import Ui_EventsWidget
-    from PyQt5.QtWidgets import QApplication, QWidget, QTableWidget, QComboBox, QPushButton, QHeaderView, QColorDialog
+    from PyQt5.QtWidgets import QApplication, QWidget, QTableWidget, QComboBox, QPushButton, QHeaderView, QColorDialog, QMessageBox, QShortcut
+    from PyQt5.QtGui import QKeySequence
 except ImportError:
     #Path when import for QtCreator (laungh this project)
     from ui_eventswidget import Ui_EventsWidget
-    from PySide6.QtWidgets import QApplication, QWidget, QTableWidget, QComboBox, QPushButton, QHeaderView, QColorDialog
+    from PySide6.QtWidgets import QApplication, QWidget, QTableWidget, QComboBox, QPushButton, QHeaderView, QColorDialog, QMessageBox
+    from PySide6.QtGui import QKeySequence, QShortcut
 
 
 
@@ -57,7 +59,6 @@ class EventsWidget(QWidget):
         self.ui.setupUi(self)
 
         # init
-        #self.ui.frame_Footer.setEnabled(False)
         self.ui.tableWidget.horizontalHeader().setSectionResizeMode(INDEX_COLUMN_COLOR, QHeaderView.ResizeMode.Fixed)
         self.ui.tableWidget.setColumnWidth(INDEX_COLUMN_COLOR, 65)
 
@@ -76,16 +77,8 @@ class EventsWidget(QWidget):
         self.ui.tableWidget.setCellWidget(4,INDEX_COLUMN_COLOR, ColorWidget(self))
 
         # Add Connection
-        #self.ui.tableWidget.itemSelectionChanged.connect(self.on_itemSelectionChanged)
         self.ui.btn_Insert.clicked.connect(self.on_btn_Insert)
         self.ui.btn_Remove.clicked.connect(self.on_btn_Remove)
-
-    def on_itemSelectionChanged(self): #TODO_SCE:: pas utile finalement?
-        rowIndex = self.ui.tableWidget.currentRow()
-        if (rowIndex == -1):
-            self.ui.frame_Footer.setEnabled(False)
-        else:
-            self.ui.frame_Footer.setEnabled(True)
 
     def on_btn_Insert(self):
         rowIndex = self.ui.tableWidget.currentRow() + 1
