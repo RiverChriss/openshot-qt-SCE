@@ -8,7 +8,7 @@ import sys
 #     pyside2-uic eventswidget.ui -o ui_eventswidget.py
 try:
     #Path when import for project Openshot
-    from src.SCE.EventsWidget.ui_eventswidget import Ui_EventsWidget
+    from SCE.EventsWidget.ui_eventswidget import Ui_EventsWidget
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
     from PyQt5.QtCore import *

@@ -553,14 +553,14 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockWidget">
+  <widget class="QDockWidget" name="dockEventsManager">
    <property name="windowTitle">
     <string>Events Manager</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="EventsWidget" name="dockWidgetContents_5"/>
+   <widget class="EventsWidget" name="dockEventsManagerContents"/>
   </widget>
   <action name="actionNew">
    <property name="icon">
