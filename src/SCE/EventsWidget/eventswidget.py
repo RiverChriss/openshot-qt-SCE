@@ -73,20 +73,12 @@ class EventsWidget(QWidget):
         # init
         self.ui.tableWidget.horizontalHeader().setSectionResizeMode(INDEX_COLUMN_COLOR, QHeaderView.ResizeMode.Fixed)
         self.ui.tableWidget.setColumnWidth(INDEX_COLUMN_COLOR, 65)
+        self.insertRow()
+        self.insertRow()
+        self.insertRow()
+        self.insertRow()
+        self.insertRow()
 
-        # init the combobox in the table
-        self.ui.tableWidget.setCellWidget(0,INDEX_COLUMN_CATEGORY, ComboCategories(self))
-        self.ui.tableWidget.setCellWidget(1,INDEX_COLUMN_CATEGORY, ComboCategories(self))
-        self.ui.tableWidget.setCellWidget(2,INDEX_COLUMN_CATEGORY, ComboCategories(self))
-        self.ui.tableWidget.setCellWidget(3,INDEX_COLUMN_CATEGORY, ComboCategories(self))
-        self.ui.tableWidget.setCellWidget(4,INDEX_COLUMN_CATEGORY, ComboCategories(self))
-
-        # init the colorbox in the table
-        self.ui.tableWidget.setCellWidget(0,INDEX_COLUMN_COLOR, ColorWidget(self))
-        self.ui.tableWidget.setCellWidget(1,INDEX_COLUMN_COLOR, ColorWidget(self))
-        self.ui.tableWidget.setCellWidget(2,INDEX_COLUMN_COLOR, ColorWidget(self))
-        self.ui.tableWidget.setCellWidget(3,INDEX_COLUMN_COLOR, ColorWidget(self))
-        self.ui.tableWidget.setCellWidget(4,INDEX_COLUMN_COLOR, ColorWidget(self))
 
         # Add Connection
         self.ui.btn_Insert.clicked.connect(self.on_btn_Insert)
@@ -94,12 +86,13 @@ class EventsWidget(QWidget):
         self.ui.btn_Load.clicked.connect(self.on_btn_Load)
         self.ui.btn_Save.clicked.connect(self.on_btn_Save)
 
-    def insertRow(self, index=-1, rgb=ColorWidget.DEFAULT_COLOR, shotcut="", category="", description=""):
+    def insertRow(self, index=0, rgb=ColorWidget.DEFAULT_COLOR, shotcut="", category="", description=""):
         self.ui.tableWidget.insertRow(index)
         self.ui.tableWidget.setCellWidget(index,INDEX_COLUMN_CATEGORY, ComboCategories(self, ComboCategories.map[category]))
         self.ui.tableWidget.setCellWidget(index,INDEX_COLUMN_COLOR, ColorWidget(self, rgb))
         itemShortcut = QTableWidgetItem()
         itemShortcut.setText(shotcut)
+        itemShortcut.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ui.tableWidget.setItem(index, INDEX_COLUMN_SHORTCUT, itemShortcut)
         itemDescription = QTableWidgetItem()
         itemDescription.setText(description)
