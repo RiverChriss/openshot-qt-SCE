@@ -94,15 +94,15 @@ class Ui_EventsWidget(object):
         self.frame_Footer2.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_3 = QHBoxLayout(self.frame_Footer2)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.btn_Load = QPushButton(self.frame_Footer2)
-        self.btn_Load.setObjectName(u"btn_Load")
-
-        self.horizontalLayout_3.addWidget(self.btn_Load)
-
         self.btn_Save = QPushButton(self.frame_Footer2)
         self.btn_Save.setObjectName(u"btn_Save")
 
         self.horizontalLayout_3.addWidget(self.btn_Save)
+
+        self.btn_Load = QPushButton(self.frame_Footer2)
+        self.btn_Load.setObjectName(u"btn_Load")
+
+        self.horizontalLayout_3.addWidget(self.btn_Load)
 
         self.btn_CSV = QPushButton(self.frame_Footer2)
         self.btn_CSV.setObjectName(u"btn_CSV")
@@ -141,8 +141,8 @@ class Ui_EventsWidget(object):
         ___qtablewidgetitem7.setText(QCoreApplication.translate("EventsWidget", u"4", None));
         ___qtablewidgetitem8 = self.tableWidget.verticalHeaderItem(4)
         ___qtablewidgetitem8.setText(QCoreApplication.translate("EventsWidget", u"5", None));
-        self.btn_Load.setText(QCoreApplication.translate("EventsWidget", u"Load", None))
         self.btn_Save.setText(QCoreApplication.translate("EventsWidget", u"Save", None))
+        self.btn_Load.setText(QCoreApplication.translate("EventsWidget", u"Load", None))
         self.btn_CSV.setText(QCoreApplication.translate("EventsWidget", u"Export CSV", None))
     # retranslateUi
 

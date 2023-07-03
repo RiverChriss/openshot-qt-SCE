@@ -142,16 +142,16 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
-       <widget class="QPushButton" name="btn_Load">
+       <widget class="QPushButton" name="btn_Save">
         <property name="text">
-         <string>Load</string>
+         <string>Save</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btn_Save">
+       <widget class="QPushButton" name="btn_Load">
         <property name="text">
-         <string>Save</string>
+         <string>Load</string>
         </property>
        </widget>
       </item>
