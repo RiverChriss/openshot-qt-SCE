@@ -3447,5 +3447,5 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         # init the Dock for Events Manager
         # TODO_SCE:: a verifier la bonne combinaison
         self.dockEventsManager.setFloating(False)
-        self.dockEventsManager.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable | QDockWidget.DockWidgetFeature.DockWidgetClosable)
+        self.dockEventsManager.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.dockEventsManager.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea)

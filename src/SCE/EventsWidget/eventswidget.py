@@ -30,12 +30,18 @@ HEADER_REF = ["ColorR", "ColorG", "ColorB", "Shortcut", "Category", "Description
 
 
 class ComboCategories(QComboBox):
-    map = {"":0, "Task":1, "Cycle":2, "Operation":3}
-    def __init__(self, parent=None, index=-1):
+    MAP = {"":0, "Task":1, "Cycle":2, "Operation Left":3, "Operation Right":4, "Analyse":5}
+    def __init__(self, parent=None, name=""):
         super().__init__(parent)
-        self.addItems(["", "Task", "Cycle", "Operation"])
-        self.setCurrentIndex(index)
+        for key in ComboCategories.MAP.keys():
+            self.addItem(key)
+        self.setCurrentIndex(ComboCategories.getIndex(name))
 
+    def getIndex(name):
+        try:
+            return ComboCategories.MAP[name]
+        except KeyError:
+            return -1
 
 
 class ColorWidget(QPushButton):
@@ -88,7 +94,7 @@ class EventsWidget(QWidget):
 
     def insertRow(self, index=0, rgb=ColorWidget.DEFAULT_COLOR, shotcut="", category="", description=""):
         self.ui.tableWidget.insertRow(index)
-        self.ui.tableWidget.setCellWidget(index,INDEX_COLUMN_CATEGORY, ComboCategories(self, ComboCategories.map[category]))
+        self.ui.tableWidget.setCellWidget(index,INDEX_COLUMN_CATEGORY, ComboCategories(self, category))
         self.ui.tableWidget.setCellWidget(index,INDEX_COLUMN_COLOR, ColorWidget(self, rgb))
         itemShortcut = QTableWidgetItem()
         itemShortcut.setText(shotcut)
