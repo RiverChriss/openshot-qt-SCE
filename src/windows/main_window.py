@@ -3449,3 +3449,6 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         self.dockEventsManager.setFloating(False)
         self.dockEventsManager.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.dockEventsManager.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea)
+
+        # Set PlayerWorker in EventsManager to be able to get the current frame
+        self.EventsManager.setPlayerWorker(self.preview_thread)

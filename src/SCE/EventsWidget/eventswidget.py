@@ -10,12 +10,14 @@ import csv
 try:
     #Path when import for project Openshot
     from SCE.EventsWidget.ui_eventswidget import Ui_EventsWidget
+    from SCE.EventsWidget.shortcutManager import ShortcutManager
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
     from PyQt5.QtCore import *
 except ImportError:
     #Path when import for QtCreator (laungh this project)
     from ui_eventswidget import Ui_EventsWidget
+    from shortcutManager import ShortcutManager
     from PySide6.QtWidgets import *
     from PySide6.QtGui import *
     from PySide6.QtCore import *
@@ -36,6 +38,7 @@ class ComboCategories(QComboBox):
         for key in ComboCategories.MAP.keys():
             self.addItem(key)
         self.setCurrentIndex(ComboCategories.getIndex(name))
+        self.currentIndexChanged.connect(lambda index : parent.shortcutManager.updates())
 
     def getIndex(name):
         try:
@@ -48,6 +51,7 @@ class ColorWidget(QPushButton):
     DEFAULT_COLOR = [50, 50, 50]
     def __init__(self, parent=None, rgb=DEFAULT_COLOR):
         super().__init__(parent)
+        self.parent = parent
         self.color = rgb
         self.SetBackgroundColor(self.color[0], self.color[1], self.color[2])
 
@@ -56,8 +60,10 @@ class ColorWidget(QPushButton):
     def on_clicked(self):
         color = QColorDialog.getColor()
         if color.isValid() :
-            self.color = [color.red(), color.green(), color.blue()]
-            self.SetBackgroundColor(color.red(), color.green(), color.blue())
+            if self.color !=  [color.red(), color.green(), color.blue()] :
+                self.color = [color.red(), color.green(), color.blue()]
+                self.SetBackgroundColor(color.red(), color.green(), color.blue())
+                self.parent.shortcutManager.updates()
 
 
     def SetBackgroundColor(self, red, green, blue):
@@ -75,15 +81,17 @@ class EventsWidget(QWidget):
         super().__init__(parent)
         self.ui = Ui_EventsWidget()
         self.ui.setupUi(self)
+        self.playerWorker = None # Need the ref to object with current Frame
+        self.shortcutManager = ShortcutManager(self)
 
         # init
         self.ui.tableWidget.horizontalHeader().setSectionResizeMode(INDEX_COLUMN_COLOR, QHeaderView.ResizeMode.Fixed)
         self.ui.tableWidget.setColumnWidth(INDEX_COLUMN_COLOR, 65)
-        self.insertRow()
-        self.insertRow()
-        self.insertRow()
-        self.insertRow()
-        self.insertRow()
+        # self.insertRow()
+        # self.insertRow()
+        # self.insertRow()
+        # self.insertRow()
+        # self.insertRow()
 
 
         # Add Connection
@@ -91,13 +99,21 @@ class EventsWidget(QWidget):
         self.ui.btn_Remove.clicked.connect(self.on_btn_Remove)
         self.ui.btn_Load.clicked.connect(self.on_btn_Load)
         self.ui.btn_Save.clicked.connect(self.on_btn_Save)
+        self.ui.btn_CSV.clicked.connect(self.on_btn_CSV)
+        self.ui.tableWidget.cellChanged.connect(lambda row, column : self.shortcutManager.update(row))
 
-    def insertRow(self, index=0, rgb=ColorWidget.DEFAULT_COLOR, shotcut="", category="", description=""):
+    def setPlayerWorker(self, playerWorker):
+        self.playerWorker = playerWorker
+
+    def insertRow(self, index=0, rgb=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description=""):
+        # Need to add first in ShortcutManager
+        self.shortcutManager.add(index)
+
         self.ui.tableWidget.insertRow(index)
         self.ui.tableWidget.setCellWidget(index,INDEX_COLUMN_CATEGORY, ComboCategories(self, category))
         self.ui.tableWidget.setCellWidget(index,INDEX_COLUMN_COLOR, ColorWidget(self, rgb))
         itemShortcut = QTableWidgetItem()
-        itemShortcut.setText(shotcut)
+        itemShortcut.setText(shortcut)
         itemShortcut.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ui.tableWidget.setItem(index, INDEX_COLUMN_SHORTCUT, itemShortcut)
         itemDescription = QTableWidgetItem()
@@ -111,7 +127,14 @@ class EventsWidget(QWidget):
 
     def on_btn_Remove(self):
         rowIndex = self.ui.tableWidget.currentRow()
+        if rowIndex == -1:
+            return
+
+        # Need to remove first in ShortcutManager
+        self.shortcutManager.remove(rowIndex)
+
         self.ui.tableWidget.removeRow(rowIndex)
+        
         # TODO_SCE:: Probablement retirer le link shortcut
 
     def on_btn_Load(self):
@@ -143,25 +166,37 @@ class EventsWidget(QWidget):
                 csvWriter = csv.writer(file)
                 csvWriter.writerow(HEADER_REF)
                 csvWriter.writerows(data)
-
                 file.close()
+
+    def on_btn_CSV(self):
+        if self.playerWorker:
+            self.logic(self.playerWorker.current_frame)
+        else:
+            print("PlayerWork is None")
+
+    def logic(self, noFrame):
+        fps = QApplication.instance().project.get("fps")
+        fps_float = float(fps["num"]) / float(fps["den"])
+        print(fps_float)
+        requested_time = float(noFrame - 1) / fps_float
+        print(requested_time)
 
     def getDataTable(self):
         data = []
         for i in range(self.ui.tableWidget.rowCount()):
             color = self.ui.tableWidget.cellWidget(i,INDEX_COLUMN_COLOR).getColor()
-            shotcut = self.ui.tableWidget.item(i, INDEX_COLUMN_SHORTCUT)
-            if (shotcut == None):
-                shotcut = ""
+            shortcut = self.ui.tableWidget.item(i, INDEX_COLUMN_SHORTCUT)
+            if (shortcut == None):
+                shortcut = ""
             else:
-                shotcut = shotcut.text()
+                shortcut = shortcut.text()
             category = self.ui.tableWidget.cellWidget(i, INDEX_COLUMN_CATEGORY).currentText()
             description = self.ui.tableWidget.item(i, INDEX_COLUMN_DESCRIPTION)
             if (description == None):
                 description = ""
             else:
                 description = description.text()
-            data.append([color[0], color[1], color[2], shotcut, category, description])
+            data.append([color[0], color[1], color[2], shortcut, category, description])
         return data
 
 if __name__ == "__main__":
