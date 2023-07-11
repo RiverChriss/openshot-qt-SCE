@@ -24,21 +24,23 @@ except ImportError:
 
 
 
-INDEX_COLUMN_COLOR = 0
 INDEX_COLUMN_SHORTCUT = 1
-INDEX_COLUMN_CATEGORY = 2
 INDEX_COLUMN_DESCRIPTION = 3
 HEADER_REF = ["ColorR", "ColorG", "ColorB", "Shortcut", "Category", "Description"]
 
 
 class ComboCategories(QComboBox):
     MAP = {"":0, "Task":1, "Cycle":2, "Operation Left":3, "Operation Right":4, "Analyse":5}
+    INDEX_COLUMN_CATEGORY = 2 # determine in UI_EventsManager
+
     def __init__(self, parent=None, name=""):
         super().__init__(parent)
+        self.itemQtTable = QTableWidgetItem(QTableWidgetItem.ItemType.UserType)
+
         for key in ComboCategories.MAP.keys():
             self.addItem(key)
         self.setCurrentIndex(ComboCategories.getIndex(name))
-        self.currentIndexChanged.connect(lambda index : parent.shortcutManager.updates())
+        self.currentIndexChanged.connect(lambda index : parent.shortcutManager.update(self.itemQtTable.row()))
 
     def getIndex(name):
         try:
@@ -46,11 +48,22 @@ class ComboCategories(QComboBox):
         except KeyError:
             return -1
 
+    def addSelfToTable(self, table, row):
+        # QTableWidgetItem know is position in a Table
+        # Need to mute signal setItem emit a change in the Table
+        table.blockSignals(True)
+        table.setCellWidget(row, ComboCategories.INDEX_COLUMN_CATEGORY, self)
+        table.setItem(row, ComboCategories.INDEX_COLUMN_CATEGORY, self.itemQtTable)
+        table.blockSignals(False)
+
 
 class ColorWidget(QPushButton):
     DEFAULT_COLOR = [50, 50, 50]
+    INDEX_COLUMN_COLOR = 0  # determine in UI_EventsManager
+
     def __init__(self, parent=None, rgb=DEFAULT_COLOR):
         super().__init__(parent)
+        self.itemQtTable = QTableWidgetItem(QTableWidgetItem.ItemType.UserType)
         self.parent = parent
         self.color = rgb
         self.SetBackgroundColor(self.color[0], self.color[1], self.color[2])
@@ -63,7 +76,7 @@ class ColorWidget(QPushButton):
             if self.color !=  [color.red(), color.green(), color.blue()] :
                 self.color = [color.red(), color.green(), color.blue()]
                 self.SetBackgroundColor(color.red(), color.green(), color.blue())
-                self.parent.shortcutManager.updates()
+                self.parent.shortcutManager.update(self.itemQtTable.row())
 
 
     def SetBackgroundColor(self, red, green, blue):
@@ -73,6 +86,14 @@ class ColorWidget(QPushButton):
         
     def getColor(self):
         return self.color
+    
+    def addSelfToTable(self, table, row):
+        # QTableWidgetItem know is position in a Table
+        # Need to mute signal setItem emit a change in the Table
+        table.blockSignals(True)
+        table.setCellWidget(row, ColorWidget.INDEX_COLUMN_COLOR, self)
+        table.setItem(row, ColorWidget.INDEX_COLUMN_COLOR, self.itemQtTable)
+        table.blockSignals(False)
 
 
 
@@ -85,8 +106,8 @@ class EventsWidget(QWidget):
         self.shortcutManager = ShortcutManager(self)
 
         # init
-        self.ui.tableWidget.horizontalHeader().setSectionResizeMode(INDEX_COLUMN_COLOR, QHeaderView.ResizeMode.Fixed)
-        self.ui.tableWidget.setColumnWidth(INDEX_COLUMN_COLOR, 65)
+        self.ui.tableWidget.horizontalHeader().setSectionResizeMode(ColorWidget.INDEX_COLUMN_COLOR, QHeaderView.ResizeMode.Fixed)
+        self.ui.tableWidget.setColumnWidth(ColorWidget.INDEX_COLUMN_COLOR, 65)
         # self.insertRow()
         # self.insertRow()
         # self.insertRow()
@@ -108,14 +129,19 @@ class EventsWidget(QWidget):
     def insertRow(self, index=0, rgb=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description=""):
         # Need to add first in ShortcutManager
         self.shortcutManager.add(index)
-
         self.ui.tableWidget.insertRow(index)
-        self.ui.tableWidget.setCellWidget(index,INDEX_COLUMN_CATEGORY, ComboCategories(self, category))
-        self.ui.tableWidget.setCellWidget(index,INDEX_COLUMN_COLOR, ColorWidget(self, rgb))
+
+        comboItem = ComboCategories(self, category)
+        comboItem.addSelfToTable(self.ui.tableWidget, index)
+
+        colorItem = ColorWidget(self,rgb)
+        colorItem.addSelfToTable(self.ui.tableWidget, index)
+
         itemShortcut = QTableWidgetItem()
         itemShortcut.setText(shortcut)
         itemShortcut.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ui.tableWidget.setItem(index, INDEX_COLUMN_SHORTCUT, itemShortcut)
+
         itemDescription = QTableWidgetItem()
         itemDescription.setText(description)
         self.ui.tableWidget.setItem(index, INDEX_COLUMN_DESCRIPTION, itemDescription)
@@ -184,13 +210,13 @@ class EventsWidget(QWidget):
     def getDataTable(self):
         data = []
         for i in range(self.ui.tableWidget.rowCount()):
-            color = self.ui.tableWidget.cellWidget(i,INDEX_COLUMN_COLOR).getColor()
+            color = self.ui.tableWidget.cellWidget(i, ColorWidget.INDEX_COLUMN_COLOR).getColor()
             shortcut = self.ui.tableWidget.item(i, INDEX_COLUMN_SHORTCUT)
             if (shortcut == None):
                 shortcut = ""
             else:
                 shortcut = shortcut.text()
-            category = self.ui.tableWidget.cellWidget(i, INDEX_COLUMN_CATEGORY).currentText()
+            category = self.ui.tableWidget.cellWidget(i, ComboCategories.INDEX_COLUMN_CATEGORY).currentText()
             description = self.ui.tableWidget.item(i, INDEX_COLUMN_DESCRIPTION)
             if (description == None):
                 description = ""

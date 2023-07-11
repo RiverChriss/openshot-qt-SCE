@@ -30,19 +30,18 @@ class ShortcutManager():
         finally:
             del self.shortcuts[index]
 
-    def update(self, index):
-        data = self.parent.getDataTable()[index]
-        self.shortcuts[index].setKey(data[3])
+    def update(self, row):
+        if row == -1 :
+            raise ValueError("value -1 can't be pass to update")
+        data = self.parent.getDataTable()[row]
+        self.shortcuts[row].setKey(data[3])
         try:
-            self.shortcuts[index].activated.disconnect()
+            self.shortcuts[row].activated.disconnect()
         except:
             print(end="")
         finally:
-            self.shortcuts[index].activated.connect(lambda : self.test([data[0], data[1], data[2]], data[3], data[4], data[5]))
+            self.shortcuts[row].activated.connect(lambda : self.test([data[0], data[1], data[2]], data[3], data[4], data[5]))
 
-    def updates(self):
-        for count, shortcut in enumerate(self.shortcuts):
-            self.update(count)
 
     def test(self, color, shortcut, category, description):
         print(f"{color}")
