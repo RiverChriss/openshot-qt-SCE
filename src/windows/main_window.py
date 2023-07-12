@@ -3452,3 +3452,15 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
 
         # Set PlayerWorker in EventsManager to be able to get the current frame
         self.EventsManager.setPlayerWorker(self.preview_thread)
+
+        self.EventsManager.shortcutManager.eventSignal.connect(self.on_test)
+
+
+    def on_test(self, message):
+        print("===============")
+        print(f"{message.rgb}")
+        print(f"{message.shortcut}")
+        print(f"{message.category}")
+        print(f"{message.description}")
+        print(f"Time : {message.timeBegin} - {message.timeEnd}")
+        print("===============")
