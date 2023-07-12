@@ -12,37 +12,49 @@ except ImportError:
     from PySide6.QtGui import *
     from PySide6.QtCore import *
 
+class FunctorShortcut():
+    def __init__(self) -> None:
+        self.rgb = ['', '', '']
+        self.shortcut = ""
+        self.category = ""
+        self.description = ""
+
+    def __call__(self) -> None:
+        print(f"{self.rgb}")
+        print(f"{self.shortcut}")
+        print(f"{self.category}")
+        print(f"{self.description}")
+    
+
 class ShortcutManager():
 
     def __init__(self, parent):
         self.parent = parent
         self.shortcuts = []
+        self.functors = []
 
-    def add(self, index):
-        self.shortcuts.insert(index, QShortcut(self.parent))
+    def add(self, row):
+        self.shortcuts.insert(row, QShortcut(self.parent))
+        self.functors.insert(row, FunctorShortcut())
+        self.shortcuts[row].activated.connect(self.functors[row])
 
-    def remove(self, index):
-        self.shortcuts[index].setKey('')
-        try:
-            self.shortcuts[index].activated.disconnect()
-        except:
-            print(end="")
-        finally:
-            del self.shortcuts[index]
-
-    def update(self, row):
-        data = self.parent.getDataRow(row)
-        self.shortcuts[row].setKey(data[3])
+    def remove(self, row):
+        self.shortcuts[row].setKey('')
         try:
             self.shortcuts[row].activated.disconnect()
         except:
             print(end="")
         finally:
-            self.shortcuts[row].activated.connect(lambda : self.test([data[0], data[1], data[2]], data[3], data[4], data[5]))
+            del self.shortcuts[row]
+        del self.functors[row]
 
-
-    def test(self, color, shortcut, category, description):
-        print(f"{color}")
-        print(f"{shortcut}")
-        print(f"{category}")
-        print(f"{description}")
+    def update(self, row):
+        data = self.parent.getDataRow(row)
+        self.shortcuts[row].setKey(data[3])
+        
+        self.functors[row].rgb[0] = data[0]
+        self.functors[row].rgb[1] = data[1]
+        self.functors[row].rgb[2] = data[2]
+        self.functors[row].shortcut = data[3]
+        self.functors[row].category = data[4]
+        self.functors[row].description = data[5]
