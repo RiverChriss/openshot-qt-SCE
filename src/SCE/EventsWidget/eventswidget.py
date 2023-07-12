@@ -160,7 +160,7 @@ class EventsWidget(QWidget):
         self.ui.tableWidget.blockSignals(previous)
 
     def on_btn_ClearShortcut(self):
-        print(self.getDataTable())
+        pass
 
     def on_btn_Insert(self):
         rowIndex = self.ui.tableWidget.currentRow() + 1
@@ -204,17 +204,16 @@ class EventsWidget(QWidget):
                 file.close()
 
     def on_btn_CSV(self):
-        if self.playerWorker:
-            self.logic(self.playerWorker.current_frame)
-        else:
-            print("PlayerWork is None")
+        pass
 
-    def logic(self, noFrame):
+    def getCurrentTime(self) -> float :
+        if not self.playerWorker :
+            return 0
         fps = QApplication.instance().project.get("fps")
         fps_float = float(fps["num"]) / float(fps["den"])
         print(fps_float)
-        requested_time = float(noFrame - 1) / fps_float
-        print(requested_time)
+        requested_time = float(self.playerWorker.current_frame - 1) / fps_float
+        return requested_time
 
     def getDataRow(self, row):
         color = self.ui.tableWidget.cellWidget(row, ColorWidget.INDEX_COLUMN_COLOR).getColor()

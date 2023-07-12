@@ -13,17 +13,40 @@ except ImportError:
     from PySide6.QtCore import *
 
 class FunctorShortcut():
-    def __init__(self) -> None:
+    def __init__(self, parent) -> None:
+        # Variable logic
+        self.parent = parent
+        self.compteurClick = 0
+
+        # Data Store
         self.rgb = ['', '', '']
         self.shortcut = ""
         self.category = ""
         self.description = ""
+        self.timeBegin = 0.0
+        self.timeEnd = 0.0
 
     def __call__(self) -> None:
+        if (self.compteurClick % 2) == 0 :
+            self.timeBegin = self.parent.getCurrentTime()
+            self.compteurClick += 1
+            print(f"La touche {self.shortcut} a été cliquer 1 seule fois")
+            return
+        
+        # Second click
+        self.timeEnd = self.parent.getCurrentTime()
+        self.compteurClick = 0
+
+        if self.timeBegin > self.timeEnd :
+            self.timeBegin, self.timeEnd = self.timeEnd, self.timeBegin
+
         print(f"{self.rgb}")
         print(f"{self.shortcut}")
         print(f"{self.category}")
         print(f"{self.description}")
+        print(f"Time : {self.timeBegin} - {self.timeEnd}")
+
+        
     
 
 class ShortcutManager():
@@ -35,7 +58,7 @@ class ShortcutManager():
 
     def add(self, row):
         self.shortcuts.insert(row, QShortcut(self.parent))
-        self.functors.insert(row, FunctorShortcut())
+        self.functors.insert(row, FunctorShortcut(self.parent))
         self.shortcuts[row].activated.connect(self.functors[row])
 
     def remove(self, row):
