@@ -51,10 +51,10 @@ class ComboCategories(QComboBox):
     def addSelfToTable(self, table, row):
         # QTableWidgetItem know is position in a Table
         # Need to mute signal setItem emit a change in the Table
-        table.blockSignals(True)
+        previous = table.blockSignals(True)
         table.setCellWidget(row, ComboCategories.INDEX_COLUMN_CATEGORY, self)
         table.setItem(row, ComboCategories.INDEX_COLUMN_CATEGORY, self.itemQtTable)
-        table.blockSignals(False)
+        table.blockSignals(previous)
 
 
 class ColorWidget(QPushButton):
@@ -90,10 +90,10 @@ class ColorWidget(QPushButton):
     def addSelfToTable(self, table, row):
         # QTableWidgetItem know is position in a Table
         # Need to mute signal setItem emit a change in the Table
-        table.blockSignals(True)
+        previous = table.blockSignals(True)
         table.setCellWidget(row, ColorWidget.INDEX_COLUMN_COLOR, self)
         table.setItem(row, ColorWidget.INDEX_COLUMN_COLOR, self.itemQtTable)
-        table.blockSignals(False)
+        table.blockSignals(previous)
 
 
 
@@ -121,31 +121,46 @@ class EventsWidget(QWidget):
         self.ui.btn_Load.clicked.connect(self.on_btn_Load)
         self.ui.btn_Save.clicked.connect(self.on_btn_Save)
         self.ui.btn_CSV.clicked.connect(self.on_btn_CSV)
+        self.ui.btn_ClearShortcut.clicked.connect(self.on_btn_ClearShortcut)
         self.ui.tableWidget.cellChanged.connect(lambda row, column : self.shortcutManager.update(row))
 
     def setPlayerWorker(self, playerWorker):
         self.playerWorker = playerWorker
 
-    def insertRow(self, index=0, rgb=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description=""):
-        # Need to add first in ShortcutManager
-        self.shortcutManager.add(index)
-        self.ui.tableWidget.insertRow(index)
+    def insertRow(self, row=0, rgb=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description=""):
+        previous = self.ui.tableWidget.blockSignals(True)
+
+        self.shortcutManager.add(row)
+        self.ui.tableWidget.insertRow(row)
 
         comboItem = ComboCategories(self, category)
-        comboItem.addSelfToTable(self.ui.tableWidget, index)
+        comboItem.addSelfToTable(self.ui.tableWidget, row)
 
         colorItem = ColorWidget(self,rgb)
-        colorItem.addSelfToTable(self.ui.tableWidget, index)
+        colorItem.addSelfToTable(self.ui.tableWidget, row)
 
         itemShortcut = QTableWidgetItem()
         itemShortcut.setText(shortcut)
         itemShortcut.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.ui.tableWidget.setItem(index, INDEX_COLUMN_SHORTCUT, itemShortcut)
+        self.ui.tableWidget.setItem(row, INDEX_COLUMN_SHORTCUT, itemShortcut)
 
         itemDescription = QTableWidgetItem()
         itemDescription.setText(description)
-        self.ui.tableWidget.setItem(index, INDEX_COLUMN_DESCRIPTION, itemDescription)
+        self.ui.tableWidget.setItem(row, INDEX_COLUMN_DESCRIPTION, itemDescription)
 
+        # Need to manually update the ShortcutManager
+        self.shortcutManager.update(row)
+
+        self.ui.tableWidget.blockSignals(previous)
+
+    def removeRow(self, row):
+        previous = self.ui.tableWidget.blockSignals(True)
+        self.shortcutManager.remove(row)
+        self.ui.tableWidget.removeRow(row)
+        self.ui.tableWidget.blockSignals(previous)
+
+    def on_btn_ClearShortcut(self):
+        print(self.getDataTable())
 
     def on_btn_Insert(self):
         rowIndex = self.ui.tableWidget.currentRow() + 1
@@ -155,13 +170,7 @@ class EventsWidget(QWidget):
         rowIndex = self.ui.tableWidget.currentRow()
         if rowIndex == -1:
             return
-
-        # Need to remove first in ShortcutManager
-        self.shortcutManager.remove(rowIndex)
-
-        self.ui.tableWidget.removeRow(rowIndex)
-        
-        # TODO_SCE:: Probablement retirer le link shortcut
+        self.removeRow(rowIndex)
 
     def on_btn_Load(self):
         filename, _ = QFileDialog.getOpenFileName(self, "Open file", "", "*.csv")
@@ -176,7 +185,7 @@ class EventsWidget(QWidget):
             file.close()
             if header == HEADER_REF:
                 for i in range(self.ui.tableWidget.rowCount()):
-                    self.ui.tableWidget.removeRow(0)
+                    self.removeRow(0)
                 for i, dataRow in enumerate(data):
                     self.insertRow(i, [dataRow[0], dataRow[1], dataRow[2]], dataRow[3], dataRow[4], dataRow[5])
                 print(header)
@@ -207,22 +216,17 @@ class EventsWidget(QWidget):
         requested_time = float(noFrame - 1) / fps_float
         print(requested_time)
 
+    def getDataRow(self, row):
+        color = self.ui.tableWidget.cellWidget(row, ColorWidget.INDEX_COLUMN_COLOR).getColor()
+        shortcut = self.ui.tableWidget.item(row, INDEX_COLUMN_SHORTCUT).text()
+        category = self.ui.tableWidget.cellWidget(row, ComboCategories.INDEX_COLUMN_CATEGORY).currentText()
+        description = self.ui.tableWidget.item(row, INDEX_COLUMN_DESCRIPTION).text()
+        return [color[0], color[1], color[2], shortcut, category, description]
+
     def getDataTable(self):
         data = []
         for i in range(self.ui.tableWidget.rowCount()):
-            color = self.ui.tableWidget.cellWidget(i, ColorWidget.INDEX_COLUMN_COLOR).getColor()
-            shortcut = self.ui.tableWidget.item(i, INDEX_COLUMN_SHORTCUT)
-            if (shortcut == None):
-                shortcut = ""
-            else:
-                shortcut = shortcut.text()
-            category = self.ui.tableWidget.cellWidget(i, ComboCategories.INDEX_COLUMN_CATEGORY).currentText()
-            description = self.ui.tableWidget.item(i, INDEX_COLUMN_DESCRIPTION)
-            if (description == None):
-                description = ""
-            else:
-                description = description.text()
-            data.append([color[0], color[1], color[2], shortcut, category, description])
+            data.append(self.getDataRow(i))
         return data
 
 if __name__ == "__main__":

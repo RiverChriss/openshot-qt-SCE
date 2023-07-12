@@ -31,9 +31,7 @@ class ShortcutManager():
             del self.shortcuts[index]
 
     def update(self, row):
-        if row == -1 :
-            raise ValueError("value -1 can't be pass to update")
-        data = self.parent.getDataTable()[row]
+        data = self.parent.getDataRow(row)
         self.shortcuts[row].setKey(data[3])
         try:
             self.shortcuts[row].activated.disconnect()
