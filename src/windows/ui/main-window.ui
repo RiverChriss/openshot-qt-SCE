@@ -553,6 +553,15 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="dockEventsManager">
+   <property name="windowTitle">
+    <string>Events Manager</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="EventsWidget" name="EventsManager"/>
+  </widget>
   <action name="actionNew">
    <property name="icon">
     <iconset theme="document-new" resource="../../../images/openshot.qrc">
@@ -1750,6 +1759,14 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>EventsWidget</class>
+   <extends>QWidget</extends>
+   <header>src/SCE/EventsWidget/eventswidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../../../images/openshot.qrc"/>
  </resources>

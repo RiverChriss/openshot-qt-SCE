@@ -3443,3 +3443,24 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         QShortcut(app.window.getShortcutByName("playToggle1"), self, activated=self.playToggle, context=Qt.WindowShortcut)
         QShortcut(app.window.getShortcutByName("playToggle2"), self, activated=self.playToggle, context=Qt.WindowShortcut)
         QShortcut(app.window.getShortcutByName("playToggle3"), self, activated=self.playToggle, context=Qt.WindowShortcut)
+
+        # init the Dock for Events Manager
+        # TODO_SCE:: a verifier la bonne combinaison
+        self.dockEventsManager.setFloating(False)
+        self.dockEventsManager.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetClosable)
+        self.dockEventsManager.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea)
+
+        # Set PlayerWorker in EventsManager to be able to get the current frame
+        self.EventsManager.setPlayerWorker(self.preview_thread)
+
+        self.EventsManager.shortcutManager.eventSignal.connect(self.on_test)
+
+
+    def on_test(self, message):
+        print("===============")
+        print(f"{message.rgb}")
+        print(f"{message.shortcut}")
+        print(f"{message.category}")
+        print(f"{message.description}")
+        print(f"Time : {message.timeBegin} - {message.timeEnd}")
+        print("===============")
