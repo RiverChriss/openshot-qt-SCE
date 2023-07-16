@@ -1254,11 +1254,11 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         # Get # of tracks
         all_tracks = get_app().project.get("layers")
         all_tracks.sort(key=lambda x: x['number'], reverse=True)
-        track_number = all_tracks[0].get("number") + 1000000
+        track_number = all_tracks[-1].get("number") - 1000000/2
 
         # Create new track above existing layer(s)
         track = Track()
-        track.data = {"number": track_number, "y": 0, "label": "", "lock": False}
+        track.data = {"number": track_number, "y": 0, "label": "Analyse", "lock": False}
         track.save()
 
     def actionAddTrackAbove_trigger(self, checked=True):
@@ -2318,6 +2318,10 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         """ Switch to the default / simple view  """
         self.removeDocks()
 
+        # add the Dock for Events Manager
+        self.dockEventsManager.setFloating(False)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockEventsManager)
+
         # Add Docks
         self.addDocks([
             self.dockFiles,
@@ -2337,6 +2341,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             self.dockEffects,
             self.dockEmojis,
             self.dockVideo,
+            self.dockEventsManager,
             ])
 
         # Set initial size of docks
@@ -2349,6 +2354,10 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
     def actionAdvanced_View_trigger(self):
         """ Switch to an alternative view """
         self.removeDocks()
+
+        # add the Dock for Events Manager
+        self.dockEventsManager.setFloating(False)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockEventsManager)
 
         # Add Docks
         self.addDocks([self.dockFiles, self.dockVideo], Qt.TopDockWidgetArea)
@@ -2368,6 +2377,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             self.dockEffects,
             self.dockEmojis,
             self.dockProperties,
+            self.dockEventsManager,
             ])
 
         # Set initial size of docks
@@ -3449,6 +3459,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         self.dockEventsManager.setFloating(False)
         self.dockEventsManager.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.dockEventsManager.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockEventsManager)
 
         # Set PlayerWorker in EventsManager to be able to get the current frame
         self.EventsManager.setPlayerWorker(self.preview_thread)
