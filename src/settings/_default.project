@@ -30,34 +30,41 @@
     {
       "id": "Cycles",
       "label" : "Cycles",
-      "number": 5000000,
+      "number": 6000000,
       "y": 0,
       "lock": false
     },
     {
       "id": "Taches",
       "label" : "Taches",
-      "number": 4000000,
+      "number": 5000000,
       "y": 0,
       "lock": false
     },
     {
       "id": "Video",
       "label" : "Video",
-      "number": 3000000,
+      "number": 4000000,
       "y": 0,
       "lock": false
     },
     {
       "id": "LeftActions",
       "label" : "LeftActions",
-      "number": 2000000,
+      "number": 3000000,
       "y": 0,
       "lock": false
     },
     {
       "id": "RightActions",
       "label" : "RightActions",
+      "number": 2000000,
+      "y": 0,
+      "lock": false
+    },
+    {
+      "id": "Analyse",
+      "label" : "Analyse",
       "number": 1000000,
       "y": 0,
       "lock": false

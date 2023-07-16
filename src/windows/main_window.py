@@ -1254,11 +1254,11 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         # Get # of tracks
         all_tracks = get_app().project.get("layers")
         all_tracks.sort(key=lambda x: x['number'], reverse=True)
-        track_number = all_tracks[0].get("number") + 1000000
+        track_number = all_tracks[-1].get("number") - 1000000/2
 
         # Create new track above existing layer(s)
         track = Track()
-        track.data = {"number": track_number, "y": 0, "label": "", "lock": False}
+        track.data = {"number": track_number, "y": 0, "label": "Analyse", "lock": False}
         track.save()
 
     def actionAddTrackAbove_trigger(self, checked=True):
