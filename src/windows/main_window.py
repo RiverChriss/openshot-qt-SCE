@@ -2318,6 +2318,10 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         """ Switch to the default / simple view  """
         self.removeDocks()
 
+        # add the Dock for Events Manager
+        self.dockEventsManager.setFloating(False)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockEventsManager)
+
         # Add Docks
         self.addDocks([
             self.dockFiles,
@@ -2337,6 +2341,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             self.dockEffects,
             self.dockEmojis,
             self.dockVideo,
+            self.dockEventsManager,
             ])
 
         # Set initial size of docks
@@ -2349,6 +2354,10 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
     def actionAdvanced_View_trigger(self):
         """ Switch to an alternative view """
         self.removeDocks()
+
+        # add the Dock for Events Manager
+        self.dockEventsManager.setFloating(False)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockEventsManager)
 
         # Add Docks
         self.addDocks([self.dockFiles, self.dockVideo], Qt.TopDockWidgetArea)
@@ -2368,6 +2377,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             self.dockEffects,
             self.dockEmojis,
             self.dockProperties,
+            self.dockEventsManager,
             ])
 
         # Set initial size of docks
@@ -3449,6 +3459,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         self.dockEventsManager.setFloating(False)
         self.dockEventsManager.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.dockEventsManager.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockEventsManager)
 
         # Set PlayerWorker in EventsManager to be able to get the current frame
         self.EventsManager.setPlayerWorker(self.preview_thread)
