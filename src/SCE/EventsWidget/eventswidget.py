@@ -129,8 +129,8 @@ class EventsWidget(QWidget):
     def setPlayerWorker(self, playerWorker):
         self.playerWorker = playerWorker
 
-    def setMainApplication(self, mainWindow):
-        self.mainWindow = mainWindow
+    def setMainApplication(self, mainApplication):
+        self.mainApplication = mainApplication
 
     def insertRow(self, row=0, rgb=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description=""):
         previous = self.ui.tableWidget.blockSignals(True)
@@ -168,6 +168,7 @@ class EventsWidget(QWidget):
         previous = self.ui.tableWidget.blockSignals(True)
         if item.column() == INDEX_COLUMN_SHORTCUT :
             item.setText(item.text().upper())
+            print(self.getAllKeyboardShortcutsValue())
             if re.fullmatch(r"(CTRL\+)?(SHIFT\+)?([A-Z]|[0-9])", item.text())  == None or \
              self.verifyShortcutAlreadyUse(item) or \
              item.text() in self.getAllKeyboardShortcutsValue() :
