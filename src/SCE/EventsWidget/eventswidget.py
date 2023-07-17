@@ -168,7 +168,6 @@ class EventsWidget(QWidget):
         previous = self.ui.tableWidget.blockSignals(True)
         if item.column() == INDEX_COLUMN_SHORTCUT :
             item.setText(item.text().upper())
-            print(self.getAllKeyboardShortcutsValue())
             if re.fullmatch(r"(CTRL\+)?(SHIFT\+)?([A-Z]|[0-9])", item.text())  == None or \
              self.verifyShortcutAlreadyUse(item) or \
              item.text() in self.getAllKeyboardShortcutsValue() :
@@ -231,7 +230,6 @@ class EventsWidget(QWidget):
             return 0
         fps = QApplication.instance().project.get("fps")
         fps_float = float(fps["num"]) / float(fps["den"])
-        print(fps_float)
         requested_time = float(self.playerWorker.current_frame - 1) / fps_float
         return requested_time
 
