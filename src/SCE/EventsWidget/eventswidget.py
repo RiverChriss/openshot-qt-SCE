@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 import sys
 import csv
+import re
 
 
 # Important:
@@ -103,6 +104,7 @@ class EventsWidget(QWidget):
         self.ui = Ui_EventsWidget()
         self.ui.setupUi(self)
         self.playerWorker = None # Need the ref to object with current Frame
+        self.mainApplication= None
         self.shortcutManager = ShortcutManager(self)
 
         # init
@@ -122,10 +124,13 @@ class EventsWidget(QWidget):
         self.ui.btn_Save.clicked.connect(self.on_btn_Save)
         self.ui.btn_CSV.clicked.connect(self.on_btn_CSV)
         self.ui.btn_ClearShortcut.clicked.connect(self.on_btn_ClearShortcut)
-        self.ui.tableWidget.cellChanged.connect(lambda row, column : self.shortcutManager.update(row))
+        self.ui.tableWidget.itemChanged.connect(self.on_itemChanged)
 
     def setPlayerWorker(self, playerWorker):
         self.playerWorker = playerWorker
+
+    def setMainApplication(self, mainWindow):
+        self.mainWindow = mainWindow
 
     def insertRow(self, row=0, rgb=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description=""):
         previous = self.ui.tableWidget.blockSignals(True)
@@ -159,9 +164,23 @@ class EventsWidget(QWidget):
         self.ui.tableWidget.removeRow(row)
         self.ui.tableWidget.blockSignals(previous)
 
+    def on_itemChanged(self, item):
+        previous = self.ui.tableWidget.blockSignals(True)
+        if item.column() == INDEX_COLUMN_SHORTCUT :
+            item.setText(item.text().upper())
+            if re.fullmatch(r"(CTRL\+)?(SHIFT\+)?([A-Z]|[0-9])", item.text())  == None or \
+             self.verifyShortcutAlreadyUse(item) or \
+             item.text() in self.getAllKeyboardShortcutsValue() :
+                QMessageBox.critical(self, "Shortcut Key Error", f"This shortcut \"{item.text()}\" is not valid")
+                item.setText("")
+                
+        self.shortcutManager.update(item.row())
+        self.ui.tableWidget.setCurrentCell(-1, -1)
+        self.ui.tableWidget.blockSignals(previous)
+
     def on_btn_ClearShortcut(self):
         pass
-
+        
     def on_btn_Insert(self):
         rowIndex = self.ui.tableWidget.currentRow() + 1
         self.insertRow(rowIndex)
@@ -227,6 +246,23 @@ class EventsWidget(QWidget):
         for i in range(self.ui.tableWidget.rowCount()):
             data.append(self.getDataRow(i))
         return data
+    
+    def getAllKeyboardShortcutsValue(self):
+        """ Get a key sequence back from the setting name """
+        keyboard_shortcuts = []
+        if self.mainApplication :
+            all_settings = self.mainApplication.get_settings()._data
+            for setting in all_settings:
+                if setting.get('category') == 'Keyboard':
+                    keyboard_shortcuts.append(setting.get('value').upper())
+        return keyboard_shortcuts
+
+    def verifyShortcutAlreadyUse(self, item) -> bool:
+        for i in range(self.ui.tableWidget.rowCount()) :
+            if i != item.row() :
+                if self.ui.tableWidget.item(i, INDEX_COLUMN_SHORTCUT).text() == item.text() :
+                    return True
+        return False
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

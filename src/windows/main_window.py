@@ -3464,6 +3464,8 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         # Set PlayerWorker in EventsManager to be able to get the current frame
         self.EventsManager.setPlayerWorker(self.preview_thread)
 
+        self.EventsManager.setMainApplication(get_app())
+
         self.EventsManager.shortcutManager.eventSignal.connect(self.on_test)
 
 
