@@ -34,14 +34,19 @@ class ComboCategories(QComboBox):
     MAP = {"":0, "Task":1, "Cycle":2, "Operation Left":3, "Operation Right":4, "Analyse":5}
     INDEX_COLUMN_CATEGORY = 2 # determine in UI_EventsManager
 
-    def __init__(self, parent=None, name=""):
-        super().__init__(parent)
+    def __init__(self, eventsWidget, name=""):
+        super().__init__(eventsWidget)
         self.itemQtTable = QTableWidgetItem(QTableWidgetItem.ItemType.UserType)
+        self.eventsWidget = eventsWidget
 
         for key in ComboCategories.MAP.keys():
             self.addItem(key)
         self.setCurrentIndex(ComboCategories.getIndex(name))
-        self.currentIndexChanged.connect(lambda index : parent.shortcutManager.update(self.itemQtTable.row()))
+        self.currentIndexChanged.connect(self.on_currentIndexChanged)
+
+    def on_currentIndexChanged(self, indexComboBox):
+        self.eventsWidget.shortcutManager.update(self.itemQtTable.row())
+        self.eventsWidget.ui.tableWidget.setCurrentCell(-1, -1)
 
     def getIndex(name):
         try:
@@ -58,14 +63,15 @@ class ComboCategories(QComboBox):
         table.blockSignals(previous)
 
 
+
 class ColorWidget(QPushButton):
     DEFAULT_COLOR = [50, 50, 50]
     INDEX_COLUMN_COLOR = 0  # determine in UI_EventsManager
 
-    def __init__(self, parent=None, rgb=DEFAULT_COLOR):
-        super().__init__(parent)
+    def __init__(self, eventsWidget, rgb=DEFAULT_COLOR):
+        super().__init__(eventsWidget)
         self.itemQtTable = QTableWidgetItem(QTableWidgetItem.ItemType.UserType)
-        self.parent = parent
+        self.eventsWidget = eventsWidget
         self.color = rgb
         self.SetBackgroundColor(self.color[0], self.color[1], self.color[2])
 
@@ -77,7 +83,8 @@ class ColorWidget(QPushButton):
             if self.color !=  [color.red(), color.green(), color.blue()] :
                 self.color = [color.red(), color.green(), color.blue()]
                 self.SetBackgroundColor(color.red(), color.green(), color.blue())
-                self.parent.shortcutManager.update(self.itemQtTable.row())
+                self.eventsWidget.shortcutManager.update(self.itemQtTable.row())
+        
 
 
     def SetBackgroundColor(self, red, green, blue):
@@ -168,10 +175,14 @@ class EventsWidget(QWidget):
         previous = self.ui.tableWidget.blockSignals(True)
         if item.column() == INDEX_COLUMN_SHORTCUT :
             item.setText(item.text().upper())
-            if re.fullmatch(r"(CTRL\+)?(SHIFT\+)?([A-Z]|[0-9])", item.text())  == None or \
-             self.verifyShortcutAlreadyUse(item) or \
-             item.text() in self.getAllKeyboardShortcutsValue() :
-                QMessageBox.critical(self, "Shortcut Key Error", f"This shortcut \"{item.text()}\" is not valid")
+            if not self.verifyShortcutForm(item.text()) :
+                QMessageBox.critical(self, "Shortcut Error", "Not a valid shortcut")
+                item.setText("")
+            elif self.verifyShortcutAlreadyUse(item) :
+                QMessageBox.critical(self, "Shortcut Error", f"This shortcut \"{item.text()}\" is already use in the table")
+                item.setText("")
+            elif item.text() in self.getAllKeyboardShortcutsValue() :
+                QMessageBox.critical(self, "Shortcut Error", f"This shortcut \"{item.text()}\" is already use in Openshot")
                 item.setText("")
                 
         self.shortcutManager.update(item.row())
@@ -262,6 +273,16 @@ class EventsWidget(QWidget):
                 if self.ui.tableWidget.item(i, INDEX_COLUMN_SHORTCUT).text() == item.text() :
                     return True
         return False
+    
+    def verifyShortcutForm(self, shortcut) -> bool :
+        if re.fullmatch(r"(CTRL\+)?(SHIFT\+)?(ALT\+)?([A-Z]|[0-9])", shortcut) == None and \
+            re.fullmatch(r"(CTRL\+)?(ALT\+)?(SHIFT\+)?([A-Z]|[0-9])", shortcut) == None and \
+            re.fullmatch(r"(SHIFT\+)?(CTRL\+)?(ALT\+)?([A-Z]|[0-9])", shortcut) == None and \
+            re.fullmatch(r"(SHIFT\+)?(ALT\+)?(CTRL\+)?([A-Z]|[0-9])", shortcut) == None and \
+            re.fullmatch(r"(ALT\+)?(CTRL\+)?(SHIFT\+)?([A-Z]|[0-9])", shortcut) == None and \
+            re.fullmatch(r"(ALT\+)?(SHIFT\+)?(CTRL\+)?([A-Z]|[0-9])", shortcut) == None :
+            return False
+        return True
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
