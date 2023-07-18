@@ -28,15 +28,15 @@
   "profile": "HD 720p 30 fps",
   "layers": [
     {
-      "id": "Cycles",
-      "label" : "Cycles",
+      "id": "Cycle",
+      "label" : "Cycle",
       "number": 6000000,
       "y": 0,
       "lock": false
     },
     {
-      "id": "Taches",
-      "label" : "Taches",
+      "id": "Task",
+      "label" : "Task",
       "number": 5000000,
       "y": 0,
       "lock": false
@@ -49,22 +49,22 @@
       "lock": false
     },
     {
-      "id": "LeftActions",
-      "label" : "LeftActions",
+      "id": "LeftAction",
+      "label" : "LeftAction",
       "number": 3000000,
       "y": 0,
       "lock": false
     },
     {
-      "id": "RightActions",
-      "label" : "RightActions",
+      "id": "RightAction",
+      "label" : "RightAction",
       "number": 2000000,
       "y": 0,
       "lock": false
     },
     {
-      "id": "Analyse",
-      "label" : "Analyse",
+      "id": "Analysis",
+      "label" : "Analysis",
       "number": 1000000,
       "y": 0,
       "lock": false

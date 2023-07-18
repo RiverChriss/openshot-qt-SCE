@@ -31,7 +31,7 @@ HEADER_REF = ["ColorR", "ColorG", "ColorB", "Shortcut", "Category", "Description
 
 
 class ComboCategories(QComboBox):
-    MAP = {"":0, "Task":1, "Cycle":2, "Operation Left":3, "Operation Right":4, "Analyse":5}
+    MAP = {"":0, "Task":1, "Cycle":2, "OperationLeft":3, "OperationRight":4, "Analysis":5}
     INDEX_COLUMN_CATEGORY = 2 # determine in UI_EventsManager
 
     def __init__(self, eventsWidget, name=""):
@@ -111,7 +111,7 @@ class EventsWidget(QWidget):
         self.ui = Ui_EventsWidget()
         self.ui.setupUi(self)
         self.playerWorker = None # Need the ref to object with current Frame
-        self.mainApplication= None
+        self.mainApplication = None # Need to get default application settings
         self.shortcutManager = ShortcutManager(self)
 
         # init
@@ -133,11 +133,9 @@ class EventsWidget(QWidget):
         self.ui.btn_ClearShortcut.clicked.connect(self.on_btn_ClearShortcut)
         self.ui.tableWidget.itemChanged.connect(self.on_itemChanged)
 
-    def setPlayerWorker(self, playerWorker):
-        self.playerWorker = playerWorker
-
-    def setMainApplication(self, mainApplication):
+    def setRefFromMainWindow(self, mainApplication, playerWorker) -> None :
         self.mainApplication = mainApplication
+        self.playerWorker = playerWorker
 
     def insertRow(self, row=0, rgb=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description=""):
         previous = self.ui.tableWidget.blockSignals(True)

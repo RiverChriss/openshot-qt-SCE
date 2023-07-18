@@ -3461,10 +3461,10 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         self.dockEventsManager.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockEventsManager)
 
-        # Set PlayerWorker in EventsManager to be able to get the current frame
-        self.EventsManager.setPlayerWorker(self.preview_thread)
+        # Set Ref need by EventsManager
+        self.EventsManager.setRefFromMainWindow(get_app(), self.preview_thread)
 
-        self.EventsManager.setMainApplication(get_app())
+
 
         self.EventsManager.shortcutManager.eventSignal.connect(self.on_test)
 
