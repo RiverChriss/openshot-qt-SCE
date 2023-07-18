@@ -23,9 +23,9 @@ class Message():
 
 
 class FunctorShortcut():
-    def __init__(self, parent) -> None:
+    def __init__(self, shortcutManager) -> None:
         # Variable logic
-        self.parent = parent
+        self.shortcutManager = shortcutManager
         self.compteurClick = 0
 
         # Data Store
@@ -34,19 +34,19 @@ class FunctorShortcut():
     def __call__(self) -> None:
         if (self.compteurClick % 2) == 0 :
             # Fist click
-            self.message.timeBegin = self.parent.getCurrentTime()
+            self.message.timeBegin = self.shortcutManager.getCurrentTime()
             self.compteurClick += 1
             print(f"La touche {self.message.shortcut} a été cliquer 1 seule fois à {self.message.timeBegin}")
             return
         
         # Second click
-        self.message.timeEnd = self.parent.getCurrentTime()
+        self.message.timeEnd = self.shortcutManager.getCurrentTime()
         self.compteurClick = 0
 
         if self.message.timeBegin > self.message.timeEnd :
             self.message.timeBegin, self.message.timeEnd = self.message.timeEnd, self.message.timeBegin
 
-        self.parent.eventSignal.emit(self.message)
+        self.shortcutManager.eventSignal.emit(self.message)
         
     
 
@@ -56,15 +56,15 @@ class ShortcutManager(QObject):
     except:
         eventSignal = Signal(Message) # if PySide6 (Qtcreator use case)
 
-    def __init__(self, parent) -> None:
-        super().__init__(parent)
+    def __init__(self, eventsManager) -> None:
+        super().__init__(eventsManager)
 
-        self.parent = parent
+        self.eventsManager = eventsManager
         self.shortcuts = []
         self.functors = []
 
     def add(self, row) -> None:
-        self.shortcuts.insert(row, QShortcut(self.parent))
+        self.shortcuts.insert(row, QShortcut(self.eventsManager))
         self.functors.insert(row, FunctorShortcut(self))
         self.shortcuts[row].activated.connect(self.functors[row])
 
@@ -79,7 +79,7 @@ class ShortcutManager(QObject):
         del self.functors[row]
 
     def update(self, row) -> None:
-        data = self.parent.getDataRow(row)
+        data = self.eventsManager.getDataRow(row)
         self.shortcuts[row].setKey(data[3])
         
         self.functors[row].message.rgb[0] = data[0]
@@ -90,4 +90,4 @@ class ShortcutManager(QObject):
         self.functors[row].message.description = data[5]
 
     def getCurrentTime(self) -> float:
-        return self.parent.getCurrentTime()
+        return self.eventsManager.getCurrentTime()
