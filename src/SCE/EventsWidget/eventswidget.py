@@ -47,6 +47,7 @@ class ComboCategories(QComboBox):
     def on_currentIndexChanged(self, indexComboBox):
         self.eventsWidget.shortcutManager.update(self.itemQtTable.row())
         self.eventsWidget.ui.tableWidget.setCurrentCell(-1, -1)
+        self.eventsWidget.detectSaveNeeded()
 
     def getIndex(name):
         try:
@@ -84,7 +85,8 @@ class ColorWidget(QPushButton):
                 self.color = [color.red(), color.green(), color.blue()]
                 self.SetBackgroundColor(color.red(), color.green(), color.blue())
                 self.eventsWidget.shortcutManager.update(self.itemQtTable.row())
-        
+                self.eventsWidget.detectSaveNeeded()
+
 
 
     def SetBackgroundColor(self, red, green, blue):
@@ -114,6 +116,7 @@ class EventsWidget(QWidget):
         self.ui.setupUi(self)
         self.playerWorker = None # Need the ref to object with current Frame
         self.mainApplication = None # Need to get default application settings
+        self.mainWindow = None # Need to be able call function in main_window
         self.shortcutManager = ShortcutManager(self)
 
         # init
@@ -128,17 +131,15 @@ class EventsWidget(QWidget):
         # Add Connection
         self.ui.btn_Insert.clicked.connect(self.on_btn_Insert)
         self.ui.btn_Remove.clicked.connect(self.on_btn_Remove)
-        self.ui.btn_Load.clicked.connect(self.on_btn_Load)
-        self.ui.btn_Save.clicked.connect(self.on_btn_Save)
-        self.ui.btn_CSV.clicked.connect(self.on_btn_CSV)
         self.ui.btn_ClearShortcut.clicked.connect(self.on_btn_ClearShortcut)
         self.ui.tableWidget.itemChanged.connect(self.on_itemChanged)
 
-    def setRefFromMainWindow(self, mainApplication, playerWorker) -> None :
+    def setRefFromMainWindow(self, mainWindow, mainApplication, playerWorker) -> None :
+        self.mainWindow = mainWindow
         self.mainApplication = mainApplication
         self.playerWorker = playerWorker
 
-    def insertRow(self, row=0, rgb=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description=""):
+    def insertRow(self, row=0, rgb=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description="") -> None:
         previous = self.ui.tableWidget.blockSignals(True)
 
         self.shortcutManager.add(row)
@@ -164,7 +165,7 @@ class EventsWidget(QWidget):
 
         self.ui.tableWidget.blockSignals(previous)
 
-    def removeRow(self, row):
+    def removeRow(self, row) -> None :
         previous = self.ui.tableWidget.blockSignals(True)
         self.shortcutManager.remove(row)
         self.ui.tableWidget.removeRow(row)
@@ -188,6 +189,7 @@ class EventsWidget(QWidget):
         self.shortcutManager.update(item.row())
         self.ui.tableWidget.setCurrentCell(-1, -1)
         self.ui.tableWidget.blockSignals(previous)
+        self.detectSaveNeeded()
 
     def on_btn_ClearShortcut(self):
         pass
@@ -201,40 +203,56 @@ class EventsWidget(QWidget):
         if rowIndex == -1:
             return
         self.removeRow(rowIndex)
+        self.detectSaveNeeded()
 
-    def on_btn_Load(self):
-        filename, _ = QFileDialog.getOpenFileName(self, "Open file", "", "*.csv")
-        if filename:
-            file = open(filename)
-            csvreader = csv.reader(file)
+    def importEventsManager(self, file_path) -> None:
+        try :
+            file = open(file_path)
+            csvReader = csv.reader(file)
             header = []
             data = []
-            header = next(csvreader)
-            for row in csvreader:
-                data.append(row)
-            file.close()
+            header = next(csvReader)
             if header == HEADER_REF:
+                # Get All the data from the file
+                for row in csvReader:
+                    data.append(row)
+                file.close()
+
+                # Remove old row before Load
                 for i in range(self.ui.tableWidget.rowCount()):
                     self.removeRow(0)
-                for i, dataRow in enumerate(data):
-                    self.insertRow(i, [dataRow[0], dataRow[1], dataRow[2]], dataRow[3], dataRow[4], dataRow[5])
-                print(header)
-                print(data)
+                
+                # Add row in table
+                needToDialogWarning = False
+                for i, [red, green, blue, shortcut, category, description] in enumerate(data):
+                    if shortcut != "" :
+                        shortcut = shortcut.upper()
+                        # Need to verify validity of shortcut
+                        if not self.verifyShortcutForm(shortcut) or \
+                            shortcut in self.getAllKeyboardShortcutsValue() :
+                            shortcut = ""
+                            needToDialogWarning = True
+                    self.insertRow(i, [red, green, blue], shortcut, category, description)
+                
+                # Show DialogBoxWarning (if need)
+                if needToDialogWarning :
+                    QMessageBox.warning(self, "Duplicate shortcut warning!", "Some shortcuts have been deleted because they were in conflict with existing Openshot shortcuts")
+            else :
+                file.close()
+                QMessageBox.critical(self, "Events Import Error!", "There was an issue importing the event list and the shortcuts.  Please try again or enter them manually.")
+        except :
+            print("ERROR : Unable to import the event list")
 
-    def on_btn_Save(self):
-        options = QFileDialog.Options()
-        #options |= QFileDialog.Option.DontUseNativeDialog
-        filename, _ = QFileDialog.getSaveFileName(self, "Save File", "", "*.csv", options= options)
-        if filename:
+    def exportEventsManager(self, file_path) -> None:
+        try :
             data = self.getDataTable()
-            with open(filename, 'w', newline="") as file:
+            with open(file_path, 'w', newline="") as file:
                 csvWriter = csv.writer(file)
                 csvWriter.writerow(HEADER_REF)
                 csvWriter.writerows(data)
                 file.close()
-
-    def on_btn_CSV(self):
-        pass
+        except :
+            print("ERROR : Unable to export the event list")
 
     def getCurrentTime(self) -> float :
         if not self.playerWorker :
@@ -283,6 +301,12 @@ class EventsWidget(QWidget):
             re.fullmatch(r"(ALT\+)?(SHIFT\+)?(CTRL\+)?([A-Z]|[0-9])", shortcut) == None :
             return False
         return True
+
+    def detectSaveNeeded(self) :
+        if self.mainApplication :
+            self.mainApplication.project.has_unsaved_changes = True
+        if self.mainWindow :
+            self.mainWindow.setActionSaveEnabled()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

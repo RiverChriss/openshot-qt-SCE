@@ -52,6 +52,7 @@ from PyQt5.QtWidgets import (
 
 from classes import exceptions, info, qt_types, sentry, ui_util, updates
 from classes.app import get_app
+from classes.assets import get_assets_path
 from classes.exporters.edl import export_edl
 from classes.exporters.final_cut_pro import export_xml
 from classes.importers.edl import import_edl
@@ -470,6 +471,9 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             # Save project to file
             app.project.save(file_path)
 
+            # Save EventsManager to file
+            self.EventsManager.exportEventsManager(os.path.join(get_assets_path(file_path), "EventList.csv"))
+
             # Set Window title
             self.SetWindowTitle()
 
@@ -531,6 +535,9 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
 
                 # Load project file
                 app.project.load(file_path, clear_thumbnails)
+
+                # Load EventsManager to file
+                self.EventsManager.importEventsManager(os.path.join(get_assets_path(file_path), "EventList.csv"))
 
                 # Set Window title
                 self.SetWindowTitle()
@@ -3462,12 +3469,14 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockEventsManager)
 
         # Set Ref need by EventsManager
-        self.EventsManager.setRefFromMainWindow(get_app(), self.preview_thread)
+        self.EventsManager.setRefFromMainWindow(self, get_app(), self.preview_thread)
 
 
 
         self.EventsManager.shortcutManager.eventSignal.connect(self.on_test)
 
+    def setActionSaveEnabled(self) -> None :
+        self.actionSave.setEnabled(True)
 
     def on_test(self, message):
         print("===============")

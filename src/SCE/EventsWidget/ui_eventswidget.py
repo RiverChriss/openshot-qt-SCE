@@ -27,30 +27,6 @@ class Ui_EventsWidget(object):
         EventsWidget.setStyleSheet(u"")
         self.gridLayout = QGridLayout(EventsWidget)
         self.gridLayout.setObjectName(u"gridLayout")
-        self.frame_Footer = QFrame(EventsWidget)
-        self.frame_Footer.setObjectName(u"frame_Footer")
-        self.frame_Footer.setFrameShape(QFrame.NoFrame)
-        self.frame_Footer.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout = QHBoxLayout(self.frame_Footer)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.btn_Insert = QPushButton(self.frame_Footer)
-        self.btn_Insert.setObjectName(u"btn_Insert")
-
-        self.horizontalLayout.addWidget(self.btn_Insert)
-
-        self.btn_ClearShortcut = QPushButton(self.frame_Footer)
-        self.btn_ClearShortcut.setObjectName(u"btn_ClearShortcut")
-
-        self.horizontalLayout.addWidget(self.btn_ClearShortcut)
-
-        self.btn_Remove = QPushButton(self.frame_Footer)
-        self.btn_Remove.setObjectName(u"btn_Remove")
-
-        self.horizontalLayout.addWidget(self.btn_Remove)
-
-
-        self.gridLayout.addWidget(self.frame_Footer, 1, 0, 1, 1)
-
         self.tableWidget = QTableWidget(EventsWidget)
         if (self.tableWidget.columnCount() < 4):
             self.tableWidget.setColumnCount(4)
@@ -78,29 +54,29 @@ class Ui_EventsWidget(object):
 
         self.gridLayout.addWidget(self.tableWidget, 0, 0, 1, 1)
 
-        self.frame_Footer2 = QFrame(EventsWidget)
-        self.frame_Footer2.setObjectName(u"frame_Footer2")
-        self.frame_Footer2.setFrameShape(QFrame.NoFrame)
-        self.frame_Footer2.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_3 = QHBoxLayout(self.frame_Footer2)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.btn_Save = QPushButton(self.frame_Footer2)
-        self.btn_Save.setObjectName(u"btn_Save")
+        self.frame_Footer = QFrame(EventsWidget)
+        self.frame_Footer.setObjectName(u"frame_Footer")
+        self.frame_Footer.setFrameShape(QFrame.NoFrame)
+        self.frame_Footer.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout = QHBoxLayout(self.frame_Footer)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.btn_Insert = QPushButton(self.frame_Footer)
+        self.btn_Insert.setObjectName(u"btn_Insert")
 
-        self.horizontalLayout_3.addWidget(self.btn_Save)
+        self.horizontalLayout.addWidget(self.btn_Insert)
 
-        self.btn_Load = QPushButton(self.frame_Footer2)
-        self.btn_Load.setObjectName(u"btn_Load")
+        self.btn_ClearShortcut = QPushButton(self.frame_Footer)
+        self.btn_ClearShortcut.setObjectName(u"btn_ClearShortcut")
 
-        self.horizontalLayout_3.addWidget(self.btn_Load)
+        self.horizontalLayout.addWidget(self.btn_ClearShortcut)
 
-        self.btn_CSV = QPushButton(self.frame_Footer2)
-        self.btn_CSV.setObjectName(u"btn_CSV")
+        self.btn_Remove = QPushButton(self.frame_Footer)
+        self.btn_Remove.setObjectName(u"btn_Remove")
 
-        self.horizontalLayout_3.addWidget(self.btn_CSV)
+        self.horizontalLayout.addWidget(self.btn_Remove)
 
 
-        self.gridLayout.addWidget(self.frame_Footer2, 2, 0, 1, 1)
+        self.gridLayout.addWidget(self.frame_Footer, 1, 0, 1, 1)
 
 
         self.retranslateUi(EventsWidget)
@@ -110,9 +86,6 @@ class Ui_EventsWidget(object):
 
     def retranslateUi(self, EventsWidget):
         EventsWidget.setWindowTitle(QCoreApplication.translate("EventsWidget", u"EventsWidget", None))
-        self.btn_Insert.setText(QCoreApplication.translate("EventsWidget", u"Insert", None))
-        self.btn_ClearShortcut.setText(QCoreApplication.translate("EventsWidget", u"Clear Shortcut", None))
-        self.btn_Remove.setText(QCoreApplication.translate("EventsWidget", u"Remove", None))
         ___qtablewidgetitem = self.tableWidget.horizontalHeaderItem(0)
         ___qtablewidgetitem.setText(QCoreApplication.translate("EventsWidget", u"Color", None));
         ___qtablewidgetitem1 = self.tableWidget.horizontalHeaderItem(1)
@@ -121,8 +94,8 @@ class Ui_EventsWidget(object):
         ___qtablewidgetitem2.setText(QCoreApplication.translate("EventsWidget", u"Category", None));
         ___qtablewidgetitem3 = self.tableWidget.horizontalHeaderItem(3)
         ___qtablewidgetitem3.setText(QCoreApplication.translate("EventsWidget", u"Description", None));
-        self.btn_Save.setText(QCoreApplication.translate("EventsWidget", u"Save", None))
-        self.btn_Load.setText(QCoreApplication.translate("EventsWidget", u"Load", None))
-        self.btn_CSV.setText(QCoreApplication.translate("EventsWidget", u"Export CSV", None))
+        self.btn_Insert.setText(QCoreApplication.translate("EventsWidget", u"Insert", None))
+        self.btn_ClearShortcut.setText(QCoreApplication.translate("EventsWidget", u"Clear Shortcut", None))
+        self.btn_Remove.setText(QCoreApplication.translate("EventsWidget", u"Remove", None))
     # retranslateUi
 
