@@ -72,6 +72,7 @@ class Ui_EventsWidget(object):
         self.tableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tableWidget.setRowCount(0)
         self.tableWidget.horizontalHeader().setVisible(True)
+        self.tableWidget.horizontalHeader().setMinimumSectionSize(65)
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         self.tableWidget.verticalHeader().setVisible(False)
 

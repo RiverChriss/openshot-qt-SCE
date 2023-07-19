@@ -88,7 +88,9 @@ class ColorWidget(QPushButton):
 
 
     def SetBackgroundColor(self, red, green, blue):
-        self.setStyleSheet(f"background-color: rgb({red}, {green}, {blue});"
+        color = f"rgb({red}, {green}, {blue})"
+        self.setStyleSheet("background-color: "
+                            f"qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 {color}, stop: 1 {color});"
                             "margin-left: 10px;"
                             "margin-right: 10px;")
         
@@ -115,14 +117,13 @@ class EventsWidget(QWidget):
         self.shortcutManager = ShortcutManager(self)
 
         # init
-        self.ui.tableWidget.horizontalHeader().setSectionResizeMode(ColorWidget.INDEX_COLUMN_COLOR, QHeaderView.ResizeMode.Fixed)
+        header = self.ui.tableWidget.horizontalHeader()
+        header.setSectionResizeMode(ColorWidget.INDEX_COLUMN_COLOR, QHeaderView.ResizeMode.Fixed)
         self.ui.tableWidget.setColumnWidth(ColorWidget.INDEX_COLUMN_COLOR, 65)
-        # self.insertRow()
-        # self.insertRow()
-        # self.insertRow()
-        # self.insertRow()
-        # self.insertRow()
-
+        header.setSectionResizeMode(INDEX_COLUMN_SHORTCUT, QHeaderView.ResizeMode.ResizeToContents)
+        self.ui.tableWidget.setColumnWidth(ComboCategories.INDEX_COLUMN_CATEGORY, 130)
+        header.setMaximumSectionSize(header.minimumSectionSize()*3)
+        header.setSectionResizeMode(INDEX_COLUMN_DESCRIPTION, QHeaderView.ResizeMode.Stretch)
 
         # Add Connection
         self.ui.btn_Insert.clicked.connect(self.on_btn_Insert)
@@ -172,16 +173,17 @@ class EventsWidget(QWidget):
     def on_itemChanged(self, item):
         previous = self.ui.tableWidget.blockSignals(True)
         if item.column() == INDEX_COLUMN_SHORTCUT :
-            item.setText(item.text().upper())
-            if not self.verifyShortcutForm(item.text()) :
-                QMessageBox.critical(self, "Shortcut Error", "Not a valid shortcut")
-                item.setText("")
-            elif self.verifyShortcutAlreadyUse(item) :
-                QMessageBox.critical(self, "Shortcut Error", f"This shortcut \"{item.text()}\" is already use in the table")
-                item.setText("")
-            elif item.text() in self.getAllKeyboardShortcutsValue() :
-                QMessageBox.critical(self, "Shortcut Error", f"This shortcut \"{item.text()}\" is already use in Openshot")
-                item.setText("")
+            if item.text() != "" :
+                item.setText(item.text().upper())
+                if not self.verifyShortcutForm(item.text()) :
+                    QMessageBox.critical(self, "Shortcut Error", "Not a valid shortcut")
+                    item.setText("")
+                elif self.verifyShortcutAlreadyUse(item) :
+                    QMessageBox.critical(self, "Shortcut Error", f"This shortcut \"{item.text()}\" is already use in the table")
+                    item.setText("")
+                elif item.text() in self.getAllKeyboardShortcutsValue() :
+                    QMessageBox.critical(self, "Shortcut Error", f"This shortcut \"{item.text()}\" is already use in Openshot")
+                    item.setText("")
                 
         self.shortcutManager.update(item.row())
         self.ui.tableWidget.setCurrentCell(-1, -1)
