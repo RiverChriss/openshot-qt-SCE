@@ -48,46 +48,61 @@ class FunctorShortcut():
 
         self.shortcutManager.eventSignal.emit(self.message)
         
-    
 
+        
 class ShortcutManager(QObject):
     try:
         eventSignal = pyqtSignal(Message) # if PyQt5 (Openshot use case)
     except:
         eventSignal = Signal(Message) # if PySide6 (Qtcreator use case)
 
-    def __init__(self, eventsManager) -> None:
+    def __init__(self, eventsManager, tableWidget, columnItemUserShortcut):
         super().__init__(eventsManager)
+        self.eventsManager =eventsManager
+        self.tableWidget = tableWidget
+        self.columnItemUserShortcut = columnItemUserShortcut
 
-        self.eventsManager = eventsManager
-        self.shortcuts = []
-        self.functors = []
+    def addItemShortcut(self, row) -> None :
+        self.tableWidget.setItem(row, self.columnItemUserShortcut, ItemUserShortcut(self))
 
-    def add(self, row) -> None:
-        self.shortcuts.insert(row, QShortcut(self.eventsManager))
-        self.functors.insert(row, FunctorShortcut(self))
-        self.shortcuts[row].activated.connect(self.functors[row])
+    def removeShortcutKey(self, row) -> None :
+        itemUserShortcut = self.tableWidget.item(row, self.columnItemUserShortcut)
+        if itemUserShortcut :
+            itemUserShortcut.removeShortcutKey()
 
-    def remove(self, row) -> None:
-        self.shortcuts[row].setKey('')
-        try:
-            self.shortcuts[row].activated.disconnect()
-        except:
-            print(end="")
-        finally:
-            del self.shortcuts[row]
-        del self.functors[row]
-
-    def update(self, row) -> None:
-        data = self.eventsManager.getDataRow(row)
-        self.shortcuts[row].setKey(data[3])
-        
-        self.functors[row].message.rgb[0] = data[0]
-        self.functors[row].message.rgb[1] = data[1]
-        self.functors[row].message.rgb[2] = data[2]
-        self.functors[row].message.shortcut = data[3]
-        self.functors[row].message.category = data[4]
-        self.functors[row].message.description = data[5]
+    def updateFunctor(self, row) -> None :
+        itemUserShortcut = self.tableWidget.item(row, self.columnItemUserShortcut)
+        if itemUserShortcut :
+            [red, green, blue, shortcut, category, description] = self.eventsManager.getDataRow(row)
+            itemUserShortcut.update([red, green, blue], shortcut, category, description)
 
     def getCurrentTime(self) -> float:
         return self.eventsManager.getCurrentTime()
+
+
+
+class ItemUserShortcut(QTableWidgetItem):
+    def __init__(self, shortcutManager) -> None:
+        super().__init__(QTableWidgetItem.ItemType.UserType)
+        self.shortcutManager = shortcutManager
+
+        self.shortcut = QShortcut(self.shortcutManager.eventsManager)
+        self.functor = FunctorShortcut(shortcutManager)
+        self.shortcut.activated.connect(self.functor)
+    
+    def removeShortcutKey(self) -> None:
+        self.shortcut.setKey('')
+        try:
+            self.shortcut.activated.disconnect()
+        except:
+            print(end="")
+
+    def update(self, rgb, shortcut, category, description) -> None:
+        self.shortcut.setKey(shortcut)
+        
+        self.functor.message.rgb[0] = rgb[0]
+        self.functor.message.rgb[1] = rgb[1]
+        self.functor.message.rgb[2] = rgb[2]
+        self.functor.message.shortcut = shortcut
+        self.functor.message.category = category
+        self.functor.message.description = description
