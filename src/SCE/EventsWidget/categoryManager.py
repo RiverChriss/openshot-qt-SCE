@@ -54,7 +54,7 @@ class CategoryManager(QObject) :
         self.eventsManager = eventsManager
         self.tableWidget = tableWidget
         self.indexColumn = indexColumn
-        self.listCategory = ["", "Cycle", "LeftAction", "RightAction", "Analysis"] #TODO::Changer pour get dans eventsManager
+        self.listCategory = []
 
     def addComboBox(self, row, name="") -> None:
         comboBox = ComboCategory(self, name)

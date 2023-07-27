@@ -281,6 +281,10 @@ class EventsWidget(QWidget):
             self.mainApplication.project.has_unsaved_changes = True
         if self.mainWindow :
             self.mainWindow.setActionSaveEnabled()
+    
+    def addCategories(self, listName) -> None :
+        for name in listName :
+                self.categoryManager.addCategory(name)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

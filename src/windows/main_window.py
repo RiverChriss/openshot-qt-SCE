@@ -3477,7 +3477,12 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         # Set Ref need by EventsManager
         self.EventsManager.setRefFromMainWindow(self, get_app(), self.preview_thread)
 
-
+        # Add the initial Category in the ComboBox
+        listName = []
+        for track in self.getAllTracks() :
+            if track.get("label") != "Video" :
+                listName.append(track.get("label"))
+        self.EventsManager.addCategories(listName)
 
         self.EventsManager.shortcutManager.eventSignal.connect(self.on_ShortcutManager)
 
@@ -3494,7 +3499,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         
         # Verify if message.category is Analysis
         if message.category == "Analysis" :
-            allTracks = sorted(get_app().project.get("layers"), key=lambda x: x['number'], reverse=True)
+            allTracks = self.getAllTracks()
             for track in allTracks :
                 if track.get("label") != "Analysis" :
                     continue
@@ -3520,6 +3525,9 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         print("++++++++++++++++++++++++++++++++++++")
 
     
+    def getAllTracks(self) :
+        return sorted(get_app().project.get("layers"), key=lambda x: x['number'], reverse=True)
+
     def verifySpaceForEtiquette(self, noTrack, timeBegin, timeEnd) -> bool :
         if Clip.filter(intersect = timeBegin, layer = noTrack) :
             return False
