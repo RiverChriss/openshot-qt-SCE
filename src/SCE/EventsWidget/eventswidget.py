@@ -12,6 +12,7 @@ try:
     #Path when import for project Openshot
     from SCE.EventsWidget.ui_eventswidget import Ui_EventsWidget
     from SCE.EventsWidget.shortcutManager import ShortcutManager
+    from SCE.EventsWidget.categoryManager import CategoryManager
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
     from PyQt5.QtCore import *
@@ -19,6 +20,7 @@ except ImportError:
     #Path when import for QtCreator (laungh this project)
     from ui_eventswidget import Ui_EventsWidget
     from shortcutManager import ShortcutManager
+    from categoryManager import CategoryManager
     from PySide6.QtWidgets import *
     from PySide6.QtGui import *
     from PySide6.QtCore import *
@@ -30,47 +32,6 @@ INDEX_COLUMN_CATEGORY = 2
 INDEX_COLUMN_DESCRIPTION = 3
 INDEX_COLUMN_ITEM_SHORTCUT = 4
 HEADER_REF = ["ColorR", "ColorG", "ColorB", "Shortcut", "Category", "Description"]
-
-
-class ComboCategories(QComboBox):
-    MAP = {"":0, "Task":1, "Cycle":2, "LeftAction":3, "RightAction":4, "Analysis":5}
-
-    def __init__(self, eventsWidget, name=""):
-        super().__init__(eventsWidget)
-        self.itemQtTable = QTableWidgetItem(QTableWidgetItem.ItemType.UserType)
-        self.eventsWidget = eventsWidget
-
-        for key in ComboCategories.MAP.keys():
-            self.addItem(key)
-        self.setCurrentIndex(ComboCategories.getIndex(name))
-        self.currentIndexChanged.connect(self.on_currentIndexChanged)
-
-    def on_currentIndexChanged(self, indexComboBox):
-        table = self.itemQtTable.tableWidget()
-        previous = table.blockSignals(True)
-
-        self.itemQtTable.setText(self.itemText(indexComboBox))
-        self.eventsWidget.shortcutManager.updateFunctor(self.itemQtTable.row())
-
-        self.eventsWidget.detectSaveNeeded()
-        table.blockSignals(previous)
-        self.itemQtTable.tableWidget().setCurrentCell(-1, -1)
-
-    def getIndex(name):
-        try:
-            return ComboCategories.MAP[name]
-        except KeyError:
-            return -1
-
-    def addSelfToTable(self, table, row):
-        # QTableWidgetItem know is position in a Table
-        # Need to mute signal setItem emit a change in the Table
-        previous = table.blockSignals(True)
-        table.setCellWidget(row, INDEX_COLUMN_CATEGORY, self)
-        table.setItem(row, INDEX_COLUMN_CATEGORY, self.itemQtTable)
-        table.blockSignals(previous)
-
-
 
 class ColorWidget(QPushButton):
     DEFAULT_COLOR = [50, 50, 50]
@@ -123,6 +84,7 @@ class EventsWidget(QWidget):
         self.mainApplication = None # Need to get default application settings
         self.mainWindow = None # Need to be able call function in main_window
         self.shortcutManager = ShortcutManager(self, self.ui.tableWidget, INDEX_COLUMN_ITEM_SHORTCUT)
+        self.categoryManager = CategoryManager(self, self.ui.tableWidget, INDEX_COLUMN_CATEGORY)
 
         # init
         header = self.ui.tableWidget.horizontalHeader()
@@ -157,8 +119,7 @@ class EventsWidget(QWidget):
 
         self.shortcutManager.addItemShortcut(row)
 
-        comboItem = ComboCategories(self, category)
-        comboItem.addSelfToTable(self.ui.tableWidget, row)
+        self.categoryManager.addComboBox(row, category)
 
         colorItem = ColorWidget(self,rgb)
         colorItem.addSelfToTable(self.ui.tableWidget, row)
