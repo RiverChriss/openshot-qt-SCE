@@ -1530,6 +1530,28 @@ App.controller("TimelineCtrl", function ($scope) {
     return true;
   };
 
+
+  $scope.GetColorSCE = function() {
+
+    if ($scope.Qt && !$scope.enable_razor) {
+     
+      // For every layers
+      for (var layer_index = 0; layer_index < $scope.project.layers.length; layer_index++) {
+
+        var layer = $scope.project.layers[layer_index];
+        var test = JSON.stringify(layer);
+        timeline.qt_log("SCE", test) 
+
+        // If the color is not null, return the color associated with the layer
+        if($scope.project.layers[layer_index].color) {
+          return $scope.project.layers[layer_index].color
+        }
+      }
+    }
+
+    return "#ffffff";
+  };
+
 // ############# END QT FUNCTIONS #################### //
 
 

@@ -2840,6 +2840,13 @@ class TimelineWebView(updates.UpdateInterface, WebViewClass):
             # Notify main window of current frame
             self.window.SeekSignal.emit(position_frames)
 
+    @pyqtSlot()
+    def setColorSCE(self, color):
+        # return get_app().project.get("tagColorSCE")
+        color = "rgb(255,255,0)"
+        
+        # self.window.TimelineCenter.emit(color)
+
     @pyqtSlot(int)
     def movePlayhead(self, position_frames):
         """ Move the playhead since the position has changed inside OpenShot (probably due to the video player) """
