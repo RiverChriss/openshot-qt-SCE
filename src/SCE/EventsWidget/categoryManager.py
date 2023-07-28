@@ -82,7 +82,7 @@ class CategoryManager(QObject) :
         else :
             listToAdd = self.listCategory
 
-        if self.listDefault.__contains__(name) or self.listCategory.__contains__(name) :
+        if name.casefold() in (cat.casefold() for cat in self.listDefault) or name.casefold() in (cat.casefold() for cat in self.listCategory) :
             self.listCountSignal.emit(len(self.listCategory))
             return False
         listToAdd.append(name)

@@ -175,13 +175,14 @@ class EventsWidget(QWidget):
         text, ok = QInputDialog().getText(self, "Add a category", "Please enter the name of the new category")
         if ok :
             if not self.categoryManager.addCategory(text) :
-                QMessageBox.warning(self, "Category already in the list", f"{text}") #TODO::ERROR Message
+                QMessageBox.warning(self, "Duplicated category", f"The category : {text} already exists")
 
     def on_RemoveCategory(self):
-        text, ok = QInputDialog().getItem(self, "Remove a category", "Please select the category to be removed", self.categoryManager.listCategory)
+        text, ok = QInputDialog().getItem(self, "Remove a category", "Please select the category to be removed", \
+                                           self.categoryManager.listCategory, editable=False)
         if ok :
             if not self.categoryManager.removeCategory(text) :
-                QMessageBox.critical(self, "Not a valid Category to remove", f"{text}") #TODO::ERROR Message
+                QMessageBox.critical(self, "Invalid category", f"The category : {text} does not exists")
 
     def on_btn_ClearShortcut(self):
         pass
