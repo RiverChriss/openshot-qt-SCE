@@ -97,12 +97,17 @@ class EventsWidget(QWidget):
         self.ui.tableWidget.setSortingEnabled(True)
         self.ui.tableWidget.sortByColumn(INDEX_COLUMN_CATEGORY, Qt.SortOrder.AscendingOrder)
         self.ui.tableWidget.setColumnHidden(INDEX_COLUMN_ITEM_SHORTCUT, True)
+        self.ui.btn_RemoveCategory.setEnabled(False)
 
         # Add Connection
         self.ui.btn_Insert.clicked.connect(self.on_btn_Insert)
         self.ui.btn_Remove.clicked.connect(self.on_btn_Remove)
         self.ui.btn_ClearShortcut.clicked.connect(self.on_btn_ClearShortcut)
         self.ui.tableWidget.itemChanged.connect(self.on_itemChanged)
+        self.ui.btn_AddCategory.clicked.connect(self.on_AddCategory)
+        self.ui.btn_RemoveCategory.clicked.connect(self.on_RemoveCategory)
+        self.categoryManager.listCountSignal.connect(lambda nbCategoryNotDefault : self.ui.btn_RemoveCategory.setEnabled(nbCategoryNotDefault))
+
 
     def setRefFromMainWindow(self, mainWindow, mainApplication, playerWorker) -> None :
         self.mainWindow = mainWindow
@@ -166,6 +171,18 @@ class EventsWidget(QWidget):
         self.ui.tableWidget.setCurrentCell(-1, -1)
         self.detectSaveNeeded()
 
+    def on_AddCategory(self) :
+        text, ok = QInputDialog().getText(self, "Add a category", "Please enter the name of the new category")
+        if ok :
+            if not self.categoryManager.addCategory(text) :
+                QMessageBox.warning(self, "Category already in the list", f"{text}") #TODO::ERROR Message
+
+    def on_RemoveCategory(self):
+        text, ok = QInputDialog().getItem(self, "Remove a category", "Please select the category to be removed", self.categoryManager.listCategory)
+        if ok :
+            if not self.categoryManager.removeCategory(text) :
+                QMessageBox.critical(self, "Not a valid Category to remove", f"{text}") #TODO::ERROR Message
+
     def on_btn_ClearShortcut(self):
         pass
         
@@ -196,6 +213,9 @@ class EventsWidget(QWidget):
                 for i in range(self.ui.tableWidget.rowCount()):
                     self.removeRow(0)
                 
+                # Remove previous category before Load
+                self.categoryManager.clearCategory()
+
                 # Add row in table
                 needToDialogWarning = False
                 for i, [red, green, blue, shortcut, category, description] in enumerate(data):
@@ -282,9 +302,9 @@ class EventsWidget(QWidget):
         if self.mainWindow :
             self.mainWindow.setActionSaveEnabled()
     
-    def addCategories(self, listName) -> None :
+    def addDefaultCategories(self, listName) -> None :
         for name in listName :
-                self.categoryManager.addCategory(name)
+                self.categoryManager.addCategory(name, True)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

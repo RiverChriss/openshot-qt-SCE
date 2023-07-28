@@ -19,8 +19,17 @@ class ComboCategory(QComboBox):
         self.itemQtTable = QTableWidgetItem(name, QTableWidgetItem.ItemType.UserType)
         self.categoryManager = categoryManager
 
+        for category in self.categoryManager.listDefault:
+            self.addItem(category)
         for category in self.categoryManager.listCategory:
             self.addItem(category)
+
+        if self.getIndex(name) == -1 :
+            self.categoryManager.addCategory(name)
+            # Need the row doesn't have the ComboBox when addCategory is call
+            # (we are in the constructor and this object isn't yet add to the table)
+            # (we add after the object is create)
+            self.addItem(name)
 
         self.setCurrentIndex(self.getIndex(name))
         self.currentIndexChanged.connect(self.on_currentIndexChanged)
@@ -49,24 +58,69 @@ class ComboCategory(QComboBox):
         table.blockSignals(previous)
 
 class CategoryManager(QObject) :
+    try:
+        listCountSignal = pyqtSignal(int) # if PyQt5 (Openshot use case)
+    except:
+        listCountSignal = Signal(int) # if PySide6 (Qtcreator use case)
+
     def __init__(self, eventsManager, tableWidget,indexColumn) :
         super().__init__(eventsManager)
         self.eventsManager = eventsManager
         self.tableWidget = tableWidget
         self.indexColumn = indexColumn
+        self.listDefault = [""]
         self.listCategory = []
 
     def addComboBox(self, row, name="") -> None:
         comboBox = ComboCategory(self, name)
         comboBox.addSelfToTable(row)
 
-    def addCategory(self, name) -> None :
-        self.listCategory.append(name)
-        for i in range(self.tableWidget.rowCount()):
-            self.tableWidget.cellWidget(i, self.indexColumn).addItem(name)
+    def addCategory(self, name, persistant=False) -> bool :
+        listToAdd = None
+        if persistant :
+            listToAdd = self.listDefault
+        else :
+            listToAdd = self.listCategory
 
-    def removeCategory(self, name) -> None :
+        if self.listDefault.__contains__(name) or self.listCategory.__contains__(name) :
+            self.listCountSignal.emit(len(self.listCategory))
+            return False
+        listToAdd.append(name)
+
+        previous = self.tableWidget.blockSignals(True)
+        previousSort = self.tableWidget.isSortingEnabled()
+        self.tableWidget.setSortingEnabled(False)
+
+        for i in range(self.tableWidget.rowCount()):
+            comboBox = self.tableWidget.cellWidget(i, self.indexColumn)
+            if comboBox :
+                comboBox.addItem(name)
+
+        self.tableWidget.setSortingEnabled(previousSort)
+        self.tableWidget.blockSignals(previous)
+
+        self.listCountSignal.emit(len(self.listCategory))
+        return True
+
+    def removeCategory(self, name) -> bool :
+        if not self.listCategory.__contains__(name) :
+            self.listCountSignal.emit(len(self.listCategory))
+            return False
         self.listCategory.remove(name)
+
+        previous = self.tableWidget.blockSignals(True)
+        previousSort = self.tableWidget.isSortingEnabled()
+        self.tableWidget.setSortingEnabled(False)
+
         for i in range(self.tableWidget.rowCount()):
             comboBox = self.tableWidget.cellWidget(i, self.indexColumn)
             comboBox.removeItem(comboBox.getIndex(name))
+
+        self.tableWidget.setSortingEnabled(previousSort)
+        self.tableWidget.blockSignals(previous)
+
+        self.listCountSignal.emit(len(self.listCategory))
+        return True
+    
+    def clearCategory(self) :
+        self.listCategory.clear()

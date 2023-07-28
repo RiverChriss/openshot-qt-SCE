@@ -3482,7 +3482,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         for track in self.getAllTracks() :
             if track.get("label") != "Video" :
                 listName.append(track.get("label"))
-        self.EventsManager.addCategories(listName)
+        self.EventsManager.addDefaultCategories(listName)
 
         self.EventsManager.shortcutManager.eventSignal.connect(self.on_ShortcutManager)
 
