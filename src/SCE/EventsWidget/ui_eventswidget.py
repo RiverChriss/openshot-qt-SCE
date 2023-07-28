@@ -28,8 +28,8 @@ class Ui_EventsWidget(object):
         self.gridLayout = QGridLayout(EventsWidget)
         self.gridLayout.setObjectName(u"gridLayout")
         self.tableWidget = QTableWidget(EventsWidget)
-        if (self.tableWidget.columnCount() < 5):
-            self.tableWidget.setColumnCount(5)
+        if (self.tableWidget.columnCount() < 4):
+            self.tableWidget.setColumnCount(4)
         __qtablewidgetitem = QTableWidgetItem()
         self.tableWidget.setHorizontalHeaderItem(0, __qtablewidgetitem)
         __qtablewidgetitem1 = QTableWidgetItem()
@@ -38,8 +38,6 @@ class Ui_EventsWidget(object):
         self.tableWidget.setHorizontalHeaderItem(2, __qtablewidgetitem2)
         __qtablewidgetitem3 = QTableWidgetItem()
         self.tableWidget.setHorizontalHeaderItem(3, __qtablewidgetitem3)
-        __qtablewidgetitem4 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(4, __qtablewidgetitem4)
         self.tableWidget.setObjectName(u"tableWidget")
         self.tableWidget.setMinimumSize(QSize(400, 0))
         self.tableWidget.setEditTriggers(QAbstractItemView.AnyKeyPressed|QAbstractItemView.DoubleClicked|QAbstractItemView.EditKeyPressed)
@@ -115,8 +113,6 @@ class Ui_EventsWidget(object):
         ___qtablewidgetitem2.setText(QCoreApplication.translate("EventsWidget", u"Category", None));
         ___qtablewidgetitem3 = self.tableWidget.horizontalHeaderItem(3)
         ___qtablewidgetitem3.setText(QCoreApplication.translate("EventsWidget", u"Description", None));
-        ___qtablewidgetitem4 = self.tableWidget.horizontalHeaderItem(4)
-        ___qtablewidgetitem4.setText(QCoreApplication.translate("EventsWidget", u"ItemUserShortcut", None));
         self.btn_Insert.setText(QCoreApplication.translate("EventsWidget", u"Insert", None))
         self.btn_ClearShortcut.setText(QCoreApplication.translate("EventsWidget", u"Clear Shortcut", None))
         self.btn_Remove.setText(QCoreApplication.translate("EventsWidget", u"Remove", None))

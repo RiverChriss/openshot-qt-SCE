@@ -62,8 +62,8 @@ class ShortcutManager(QObject):
         self.tableWidget = tableWidget
         self.columnItemUserShortcut = columnItemUserShortcut
 
-    def addItemShortcut(self, row) -> None :
-        self.tableWidget.setItem(row, self.columnItemUserShortcut, ItemUserShortcut(self))
+    def addItemShortcut(self, row, name="") -> None :
+        self.tableWidget.setItem(row, self.columnItemUserShortcut, ItemShortcut(self, name))
 
     def removeShortcutKey(self, row) -> None :
         itemUserShortcut = self.tableWidget.item(row, self.columnItemUserShortcut)
@@ -81,10 +81,13 @@ class ShortcutManager(QObject):
 
 
 
-class ItemUserShortcut(QTableWidgetItem):
-    def __init__(self, shortcutManager) -> None:
-        super().__init__(QTableWidgetItem.ItemType.UserType)
+class ItemShortcut(QTableWidgetItem):
+    def __init__(self, shortcutManager, name="") -> None:
+        super().__init__(name)
         self.shortcutManager = shortcutManager
+
+        # Format
+        self.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.shortcut = QShortcut(self.shortcutManager.eventsManager)
         self.functor = FunctorShortcut(shortcutManager)

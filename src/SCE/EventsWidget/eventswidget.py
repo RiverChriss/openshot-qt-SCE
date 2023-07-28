@@ -30,7 +30,7 @@ INDEX_COLUMN_COLOR = 0
 INDEX_COLUMN_SHORTCUT = 1
 INDEX_COLUMN_CATEGORY = 2
 INDEX_COLUMN_DESCRIPTION = 3
-INDEX_COLUMN_ITEM_SHORTCUT = 4
+
 HEADER_REF = ["ColorR", "ColorG", "ColorB", "Shortcut", "Category", "Description"]
 
 class ColorWidget(QPushButton):
@@ -83,7 +83,7 @@ class EventsWidget(QWidget):
         self.playerWorker = None # Need the ref to object with current Frame
         self.mainApplication = None # Need to get default application settings
         self.mainWindow = None # Need to be able call function in main_window
-        self.shortcutManager = ShortcutManager(self, self.ui.tableWidget, INDEX_COLUMN_ITEM_SHORTCUT)
+        self.shortcutManager = ShortcutManager(self, self.ui.tableWidget, INDEX_COLUMN_SHORTCUT)
         self.categoryManager = CategoryManager(self, self.ui.tableWidget, INDEX_COLUMN_CATEGORY)
 
         # init
@@ -96,7 +96,6 @@ class EventsWidget(QWidget):
         header.setSectionResizeMode(INDEX_COLUMN_DESCRIPTION, QHeaderView.ResizeMode.Stretch)
         self.ui.tableWidget.setSortingEnabled(True)
         self.ui.tableWidget.sortByColumn(INDEX_COLUMN_CATEGORY, Qt.SortOrder.AscendingOrder)
-        self.ui.tableWidget.setColumnHidden(INDEX_COLUMN_ITEM_SHORTCUT, True)
         self.ui.btn_RemoveCategory.setEnabled(False)
 
         # Add Connection
@@ -122,17 +121,12 @@ class EventsWidget(QWidget):
 
         self.ui.tableWidget.insertRow(row)
 
-        self.shortcutManager.addItemShortcut(row)
+        self.shortcutManager.addItemShortcut(row, shortcut)
 
         self.categoryManager.addComboBox(row, category)
 
         colorItem = ColorWidget(self,rgb)
         colorItem.addSelfToTable(self.ui.tableWidget, row)
-
-        itemShortcut = QTableWidgetItem()
-        itemShortcut.setText(shortcut)
-        itemShortcut.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.ui.tableWidget.setItem(row, INDEX_COLUMN_SHORTCUT, itemShortcut)
 
         itemDescription = QTableWidgetItem()
         itemDescription.setText(description)
