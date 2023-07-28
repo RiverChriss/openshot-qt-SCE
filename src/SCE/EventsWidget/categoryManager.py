@@ -114,6 +114,9 @@ class CategoryManager(QObject) :
 
         for i in range(self.tableWidget.rowCount()):
             comboBox = self.tableWidget.cellWidget(i, self.indexColumn)
+            if comboBox.currentText() == name :
+                comboBox.setCurrentIndex(-1)
+                self.eventsManager.shortcutManager.updateFunctor(i)
             comboBox.removeItem(comboBox.getIndex(name))
 
         self.tableWidget.setSortingEnabled(previousSort)
