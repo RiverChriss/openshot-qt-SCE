@@ -1,7 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import sys
 import csv
-import re
 
 
 # Important:
@@ -30,7 +29,7 @@ INDEX_COLUMN_COLOR = 0
 INDEX_COLUMN_SHORTCUT = 1
 INDEX_COLUMN_CATEGORY = 2
 INDEX_COLUMN_DESCRIPTION = 3
-INDEX_COLUMN_ITEM_SHORTCUT = 4
+
 HEADER_REF = ["ColorR", "ColorG", "ColorB", "Shortcut", "Category", "Description"]
 
 class ColorWidget(QPushButton):
@@ -83,7 +82,7 @@ class EventsWidget(QWidget):
         self.playerWorker = None # Need the ref to object with current Frame
         self.mainApplication = None # Need to get default application settings
         self.mainWindow = None # Need to be able call function in main_window
-        self.shortcutManager = ShortcutManager(self, self.ui.tableWidget, INDEX_COLUMN_ITEM_SHORTCUT)
+        self.shortcutManager = ShortcutManager(self, self.ui.tableWidget, INDEX_COLUMN_SHORTCUT)
         self.categoryManager = CategoryManager(self, self.ui.tableWidget, INDEX_COLUMN_CATEGORY)
 
         # init
@@ -96,7 +95,6 @@ class EventsWidget(QWidget):
         header.setSectionResizeMode(INDEX_COLUMN_DESCRIPTION, QHeaderView.ResizeMode.Stretch)
         self.ui.tableWidget.setSortingEnabled(True)
         self.ui.tableWidget.sortByColumn(INDEX_COLUMN_CATEGORY, Qt.SortOrder.AscendingOrder)
-        self.ui.tableWidget.setColumnHidden(INDEX_COLUMN_ITEM_SHORTCUT, True)
         self.ui.btn_RemoveCategory.setEnabled(False)
 
         # Add Connection
@@ -122,17 +120,12 @@ class EventsWidget(QWidget):
 
         self.ui.tableWidget.insertRow(row)
 
-        self.shortcutManager.addItemShortcut(row)
+        self.shortcutManager.addItemShortcut(row, shortcut)
 
         self.categoryManager.addComboBox(row, category)
 
         colorItem = ColorWidget(self,rgb)
         colorItem.addSelfToTable(self.ui.tableWidget, row)
-
-        itemShortcut = QTableWidgetItem()
-        itemShortcut.setText(shortcut)
-        itemShortcut.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.ui.tableWidget.setItem(row, INDEX_COLUMN_SHORTCUT, itemShortcut)
 
         itemDescription = QTableWidgetItem()
         itemDescription.setText(description)
@@ -155,10 +148,10 @@ class EventsWidget(QWidget):
         if item.column() == INDEX_COLUMN_SHORTCUT :
             if item.text() != "" :
                 item.setText(item.text().upper())
-                if not self.verifyShortcutForm(item.text()) :
+                if not item.verifyShortcutForm() :
                     QMessageBox.critical(self, "Shortcut Error", "Not a valid shortcut")
                     item.setText("")
-                elif self.verifyShortcutAlreadyUse(item) :
+                elif item.verifyShortcutAlreadyUse() :
                     QMessageBox.critical(self, "Shortcut Error", f"This shortcut \"{item.text()}\" is already use in the table")
                     item.setText("")
                 elif item.text() in self.getAllKeyboardShortcutsValue() :
@@ -219,12 +212,12 @@ class EventsWidget(QWidget):
 
                 # Add row in table
                 needToDialogWarning = False
-                for i, [red, green, blue, shortcut, category, description] in enumerate(data):
+                for [red, green, blue, shortcut, category, description] in data:
+                    shortcut = shortcut.upper()
                     if shortcut != "" :
-                        shortcut = shortcut.upper()
-                        # Need to verify validity of shortcut
-                        if not self.verifyShortcutForm(shortcut) or \
-                            shortcut in self.getAllKeyboardShortcutsValue() :
+                        if not self.shortcutManager.verifyShortcutForm(shortcut) or \
+                          self.shortcutManager.verifyShortcutAlreadyUse(shortcut) or \
+                          shortcut in self.getAllKeyboardShortcutsValue() :
                             shortcut = ""
                             needToDialogWarning = True
                     self.insertRow([red, green, blue], shortcut, category, description)
@@ -280,23 +273,6 @@ class EventsWidget(QWidget):
                     keyboard_shortcuts.append(setting.get('value').upper())
         return keyboard_shortcuts
 
-    def verifyShortcutAlreadyUse(self, item) -> bool:
-        for i in range(self.ui.tableWidget.rowCount()) :
-            if i != item.row() :
-                if self.ui.tableWidget.item(i, INDEX_COLUMN_SHORTCUT).text() == item.text() :
-                    return True
-        return False
-    
-    def verifyShortcutForm(self, shortcut) -> bool :
-        if re.fullmatch(r"(CTRL\+)?(SHIFT\+)?(ALT\+)?([A-Z]|[0-9])", shortcut) == None and \
-            re.fullmatch(r"(CTRL\+)?(ALT\+)?(SHIFT\+)?([A-Z]|[0-9])", shortcut) == None and \
-            re.fullmatch(r"(SHIFT\+)?(CTRL\+)?(ALT\+)?([A-Z]|[0-9])", shortcut) == None and \
-            re.fullmatch(r"(SHIFT\+)?(ALT\+)?(CTRL\+)?([A-Z]|[0-9])", shortcut) == None and \
-            re.fullmatch(r"(ALT\+)?(CTRL\+)?(SHIFT\+)?([A-Z]|[0-9])", shortcut) == None and \
-            re.fullmatch(r"(ALT\+)?(SHIFT\+)?(CTRL\+)?([A-Z]|[0-9])", shortcut) == None :
-            return False
-        return True
-
     def detectSaveNeeded(self) :
         if self.mainApplication :
             self.mainApplication.project.has_unsaved_changes = True
@@ -306,6 +282,8 @@ class EventsWidget(QWidget):
     def addDefaultCategories(self, listName) -> None :
         for name in listName :
                 self.categoryManager.addCategory(name, True)
+
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
