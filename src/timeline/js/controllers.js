@@ -1530,26 +1530,34 @@ App.controller("TimelineCtrl", function ($scope) {
     return true;
   };
 
-
-  $scope.GetColorSCE = function() {
+// SCE::Get the color from the Tag created by a shortcut in the event manager 
+/**
+ * 
+ * @param {*} clip_id the id from the clip created on the timeline from a shortcut 
+ * @returns the color from the color picker in the event manager to color the canvas 
+ */
+  $scope.GetColorSCE = function(clip_id) {
 
     if ($scope.Qt && !$scope.enable_razor) {
      
-      // For every layers
-      for (var layer_index = 0; layer_index < $scope.project.layers.length; layer_index++) {
+      // For every clip, If the clip has a "color" property, it is an SCE clip
+      for (var clip_index = 0; clip_index < $scope.project.clips.length; clip_index++) {
 
-        var layer = $scope.project.layers[layer_index];
-        var test = JSON.stringify(layer);
-        timeline.qt_log("SCE", test) 
+        // Checks if the id of the received clip is containted in the list of clips
+        if($scope.project.clips[clip_index].id === clip_id) {
+          
+          // Checks if the color property is not null and returns it to color the canvas in Index.html
+          if($scope.project.clips[clip_index].color) {
+          
+            return $scope.project.clips[clip_index].color
+          }
 
-        // If the color is not null, return the color associated with the layer
-        if($scope.project.layers[layer_index].color) {
-          return $scope.project.layers[layer_index].color
         }
       }
     }
 
-    return "#ffffff";
+    // Returns a default color for the canvas
+    return "#606060";
   };
 
 // ############# END QT FUNCTIONS #################### //

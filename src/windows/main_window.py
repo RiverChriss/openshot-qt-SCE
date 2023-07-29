@@ -41,7 +41,7 @@ from PyQt5.QtCore import (
     Qt, pyqtSignal, pyqtSlot, QCoreApplication, PYQT_VERSION_STR,
     QTimer, QDateTime, QFileInfo, QUrl, QEvent
     )
-from PyQt5.QtGui import QIcon, QCursor, QKeySequence, QTextCursor
+from PyQt5.QtGui import QIcon, QCursor, QKeySequence, QTextCursor, QColor
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QDockWidget,
     QMessageBox, QDialog, QFileDialog, QInputDialog,
@@ -3473,16 +3473,35 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
 
 
 
-        self.EventsManager.shortcutManager.eventSignal.connect(self.on_test)
+        self.EventsManager.shortcutManager.eventSignal.connect(self.createTagSCE)
 
     def setActionSaveEnabled(self) -> None :
         self.actionSave.setEnabled(True)
 
-    def on_test(self, message):
-        print("===============")
-        print(f"{message.rgb}")
-        print(f"{message.shortcut}")
-        print(f"{message.category}")
-        print(f"{message.description}")
-        print(f"Time : {message.timeBegin} - {message.timeEnd}")
-        print("===============")
+    def createTagSCE(self, message):
+
+       #Setup the clip object and load its data
+       r = openshot.FFmpegReader("videoTest.webm")
+       c = openshot.Clip(r)
+       clip = Clip()
+       clip.data = {}
+       new_clip = json.loads(c.Json(), strict=False)
+
+       #Modify the clip properties with the relevant data
+       #TODO:: Play with layer and position to place the clip in the right track
+       new_clip["layer"] = 6000000
+       new_clip["position"] = 0.0
+       new_clip["alpha"]["Points"][0]["co"]["Y"] = 0.0
+       new_clip["has_video"]["Points"][0]["co"]["Y"]  = 0.0
+       new_clip["has_audio"]["Points"][0]["co"]["Y"]  = 0.0
+
+       #Receive the color from the event manager linked to the shortcut used (.name() converts the RGB value to hex)
+       color = QColor(message.rgb[0], message.rgb[1], message.rgb[2]) 
+       new_clip["color"] = color.name()
+       
+       #Save the clip data
+       clip.data = new_clip
+       clip.save()
+
+
+        
