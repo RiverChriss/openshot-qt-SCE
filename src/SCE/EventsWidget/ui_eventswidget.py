@@ -54,7 +54,7 @@ class Ui_EventsWidget(object):
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         self.tableWidget.verticalHeader().setVisible(False)
 
-        self.gridLayout.addWidget(self.tableWidget, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.tableWidget, 1, 0, 1, 1)
 
         self.frame_Footer = QFrame(EventsWidget)
         self.frame_Footer.setObjectName(u"frame_Footer")
@@ -78,7 +78,26 @@ class Ui_EventsWidget(object):
         self.horizontalLayout.addWidget(self.btn_Remove)
 
 
-        self.gridLayout.addWidget(self.frame_Footer, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.frame_Footer, 2, 0, 1, 1)
+
+        self.frame_Header = QFrame(EventsWidget)
+        self.frame_Header.setObjectName(u"frame_Header")
+        self.frame_Header.setFrameShape(QFrame.NoFrame)
+        self.frame_Header.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_2 = QHBoxLayout(self.frame_Header)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.btn_AddCategory = QPushButton(self.frame_Header)
+        self.btn_AddCategory.setObjectName(u"btn_AddCategory")
+
+        self.horizontalLayout_2.addWidget(self.btn_AddCategory)
+
+        self.btn_RemoveCategory = QPushButton(self.frame_Header)
+        self.btn_RemoveCategory.setObjectName(u"btn_RemoveCategory")
+
+        self.horizontalLayout_2.addWidget(self.btn_RemoveCategory)
+
+
+        self.gridLayout.addWidget(self.frame_Header, 0, 0, 1, 1)
 
 
         self.retranslateUi(EventsWidget)
@@ -101,5 +120,7 @@ class Ui_EventsWidget(object):
         self.btn_Insert.setText(QCoreApplication.translate("EventsWidget", u"Insert", None))
         self.btn_ClearShortcut.setText(QCoreApplication.translate("EventsWidget", u"Clear Shortcut", None))
         self.btn_Remove.setText(QCoreApplication.translate("EventsWidget", u"Remove", None))
+        self.btn_AddCategory.setText(QCoreApplication.translate("EventsWidget", u"Add Category", None))
+        self.btn_RemoveCategory.setText(QCoreApplication.translate("EventsWidget", u"Remove Category", None))
     # retranslateUi
 
