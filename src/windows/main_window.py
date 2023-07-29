@@ -1255,7 +1255,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             " (inserted {} at {})".format(insert_num, insert_at) if insert_at else "")
         )
 
-    def actionAddTrack_trigger(self, checked=True):
+    def actionAddTrack_trigger(self, checked=True, name="") -> int:
         log.info("actionAddTrack_trigger")
 
         # Get # of tracks
@@ -1267,10 +1267,9 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             self.renumber_all_layers()
             track_number = all_tracks[-1].get("number") - int(round(all_tracks[-1].get("number")/2))
 
-        # Create new track above existing layer(s)
+        # Create new track below existing layer(s)
         track = Track()
-        #TODO_SCE:: hardcoder Analysis n'est pas une bonne idée
-        track.data = {"number": track_number, "y": 0, "label": "Analysis", "lock": False}
+        track.data = {"number": track_number, "y": 0, "label": name, "lock": False}
         track.save()
         return track_number
 
@@ -3490,27 +3489,18 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         self.actionSave.setEnabled(True)
 
     def on_ShortcutManager(self, message):
-        noTrackEtiquette = None
-
         # Verify message.category is not null
         if message.category == "" :
             QMessageBox.critical(self, "Missing data", f"The category associated to the shortcut \"{message.shortcut}\" is missing")
             return
-        
-        # Verify if message.category is Analysis
-        if message.category == "Analysis" :
-            allTracks = self.getAllTracks()
-            for track in allTracks :
-                if track.get("label") != "Analysis" :
-                    continue
-                if self.verifySpaceForEtiquette(track.get("number"), message.timeBegin, message.timeEnd) :
-                    noTrackEtiquette = track.get("number")
-                    break
-            else :
-                # if not a space find for the etiquette analysis need to create a new track
-                noTrackEtiquette = self.actionAddTrack_trigger()
-        else :
-            noTrackEtiquette = self.getNumeroTrack(message.category)
+
+        noTrackEtiquette = None
+        for track in self.getAllTracks() :
+            if track.get("label") == message.category :
+                noTrackEtiquette = track.get("number")
+                break
+        if not noTrackEtiquette :
+            noTrackEtiquette = self.actionAddTrack_trigger(name=message.category)
 
 
         print("++++++++++++++++++++++++++++++++++++")
