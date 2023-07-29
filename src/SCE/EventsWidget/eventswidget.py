@@ -1,7 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import sys
 import csv
-import re
 
 
 # Important:
@@ -12,6 +11,7 @@ try:
     #Path when import for project Openshot
     from SCE.EventsWidget.ui_eventswidget import Ui_EventsWidget
     from SCE.EventsWidget.shortcutManager import ShortcutManager
+    from SCE.EventsWidget.categoryManager import CategoryManager
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
     from PyQt5.QtCore import *
@@ -19,55 +19,21 @@ except ImportError:
     #Path when import for QtCreator (laungh this project)
     from ui_eventswidget import Ui_EventsWidget
     from shortcutManager import ShortcutManager
+    from categoryManager import CategoryManager
     from PySide6.QtWidgets import *
     from PySide6.QtGui import *
     from PySide6.QtCore import *
 
 
-
+INDEX_COLUMN_COLOR = 0
 INDEX_COLUMN_SHORTCUT = 1
+INDEX_COLUMN_CATEGORY = 2
 INDEX_COLUMN_DESCRIPTION = 3
+
 HEADER_REF = ["ColorR", "ColorG", "ColorB", "Shortcut", "Category", "Description"]
-
-
-class ComboCategories(QComboBox):
-    MAP = {"":0, "Task":1, "Cycle":2, "OperationLeft":3, "OperationRight":4, "Analysis":5}
-    INDEX_COLUMN_CATEGORY = 2 # determine in UI_EventsManager
-
-    def __init__(self, eventsWidget, name=""):
-        super().__init__(eventsWidget)
-        self.itemQtTable = QTableWidgetItem(QTableWidgetItem.ItemType.UserType)
-        self.eventsWidget = eventsWidget
-
-        for key in ComboCategories.MAP.keys():
-            self.addItem(key)
-        self.setCurrentIndex(ComboCategories.getIndex(name))
-        self.currentIndexChanged.connect(self.on_currentIndexChanged)
-
-    def on_currentIndexChanged(self, indexComboBox):
-        self.eventsWidget.shortcutManager.update(self.itemQtTable.row())
-        self.eventsWidget.ui.tableWidget.setCurrentCell(-1, -1)
-        self.eventsWidget.detectSaveNeeded()
-
-    def getIndex(name):
-        try:
-            return ComboCategories.MAP[name]
-        except KeyError:
-            return -1
-
-    def addSelfToTable(self, table, row):
-        # QTableWidgetItem know is position in a Table
-        # Need to mute signal setItem emit a change in the Table
-        previous = table.blockSignals(True)
-        table.setCellWidget(row, ComboCategories.INDEX_COLUMN_CATEGORY, self)
-        table.setItem(row, ComboCategories.INDEX_COLUMN_CATEGORY, self.itemQtTable)
-        table.blockSignals(previous)
-
-
 
 class ColorWidget(QPushButton):
     DEFAULT_COLOR = [50, 50, 50]
-    INDEX_COLUMN_COLOR = 0  # determine in UI_EventsManager
 
     def __init__(self, eventsWidget, rgb=DEFAULT_COLOR):
         super().__init__(eventsWidget)
@@ -84,10 +50,9 @@ class ColorWidget(QPushButton):
             if self.color !=  [color.red(), color.green(), color.blue()] :
                 self.color = [color.red(), color.green(), color.blue()]
                 self.SetBackgroundColor(color.red(), color.green(), color.blue())
-                self.eventsWidget.shortcutManager.update(self.itemQtTable.row())
+                self.eventsWidget.shortcutManager.updateFunctor(self.itemQtTable.row())
                 self.eventsWidget.detectSaveNeeded()
-
-
+        self.itemQtTable.tableWidget().setCurrentCell(-1, -1)
 
     def SetBackgroundColor(self, red, green, blue):
         color = f"rgb({red}, {green}, {blue})"
@@ -103,8 +68,8 @@ class ColorWidget(QPushButton):
         # QTableWidgetItem know is position in a Table
         # Need to mute signal setItem emit a change in the Table
         previous = table.blockSignals(True)
-        table.setCellWidget(row, ColorWidget.INDEX_COLUMN_COLOR, self)
-        table.setItem(row, ColorWidget.INDEX_COLUMN_COLOR, self.itemQtTable)
+        table.setCellWidget(row, INDEX_COLUMN_COLOR, self)
+        table.setItem(row, INDEX_COLUMN_COLOR, self.itemQtTable)
         table.blockSignals(previous)
 
 
@@ -117,57 +82,64 @@ class EventsWidget(QWidget):
         self.playerWorker = None # Need the ref to object with current Frame
         self.mainApplication = None # Need to get default application settings
         self.mainWindow = None # Need to be able call function in main_window
-        self.shortcutManager = ShortcutManager(self)
+        self.shortcutManager = ShortcutManager(self, self.ui.tableWidget, INDEX_COLUMN_SHORTCUT)
+        self.categoryManager = CategoryManager(self, self.ui.tableWidget, INDEX_COLUMN_CATEGORY)
 
         # init
         header = self.ui.tableWidget.horizontalHeader()
-        header.setSectionResizeMode(ColorWidget.INDEX_COLUMN_COLOR, QHeaderView.ResizeMode.Fixed)
-        self.ui.tableWidget.setColumnWidth(ColorWidget.INDEX_COLUMN_COLOR, 65)
+        header.setSectionResizeMode(INDEX_COLUMN_COLOR, QHeaderView.ResizeMode.Fixed)
+        self.ui.tableWidget.setColumnWidth(INDEX_COLUMN_COLOR, 65)
         header.setSectionResizeMode(INDEX_COLUMN_SHORTCUT, QHeaderView.ResizeMode.ResizeToContents)
-        self.ui.tableWidget.setColumnWidth(ComboCategories.INDEX_COLUMN_CATEGORY, 130)
+        self.ui.tableWidget.setColumnWidth(INDEX_COLUMN_CATEGORY, 110)
         header.setMaximumSectionSize(header.minimumSectionSize()*3)
         header.setSectionResizeMode(INDEX_COLUMN_DESCRIPTION, QHeaderView.ResizeMode.Stretch)
+        self.ui.tableWidget.setSortingEnabled(True)
+        self.ui.tableWidget.sortByColumn(INDEX_COLUMN_CATEGORY, Qt.SortOrder.AscendingOrder)
+        self.ui.btn_RemoveCategory.setEnabled(False)
 
         # Add Connection
         self.ui.btn_Insert.clicked.connect(self.on_btn_Insert)
         self.ui.btn_Remove.clicked.connect(self.on_btn_Remove)
         self.ui.btn_ClearShortcut.clicked.connect(self.on_btn_ClearShortcut)
         self.ui.tableWidget.itemChanged.connect(self.on_itemChanged)
+        self.ui.btn_AddCategory.clicked.connect(self.on_AddCategory)
+        self.ui.btn_RemoveCategory.clicked.connect(self.on_RemoveCategory)
+        self.categoryManager.listCountSignal.connect(lambda nbCategoryNotDefault : self.ui.btn_RemoveCategory.setEnabled(nbCategoryNotDefault))
+
 
     def setRefFromMainWindow(self, mainWindow, mainApplication, playerWorker) -> None :
         self.mainWindow = mainWindow
         self.mainApplication = mainApplication
         self.playerWorker = playerWorker
 
-    def insertRow(self, row=0, rgb=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description="") -> None:
+    def insertRow(self, rgb=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description="") -> None:
+        row = 0
         previous = self.ui.tableWidget.blockSignals(True)
+        previousSort = self.ui.tableWidget.isSortingEnabled()
+        self.ui.tableWidget.setSortingEnabled(False)
 
-        self.shortcutManager.add(row)
         self.ui.tableWidget.insertRow(row)
 
-        comboItem = ComboCategories(self, category)
-        comboItem.addSelfToTable(self.ui.tableWidget, row)
+        self.shortcutManager.addItemShortcut(row, shortcut)
+
+        self.categoryManager.addComboBox(row, category)
 
         colorItem = ColorWidget(self,rgb)
         colorItem.addSelfToTable(self.ui.tableWidget, row)
-
-        itemShortcut = QTableWidgetItem()
-        itemShortcut.setText(shortcut)
-        itemShortcut.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.ui.tableWidget.setItem(row, INDEX_COLUMN_SHORTCUT, itemShortcut)
 
         itemDescription = QTableWidgetItem()
         itemDescription.setText(description)
         self.ui.tableWidget.setItem(row, INDEX_COLUMN_DESCRIPTION, itemDescription)
 
         # Need to manually update the ShortcutManager
-        self.shortcutManager.update(row)
+        self.shortcutManager.updateFunctor(row)
 
+        self.ui.tableWidget.setSortingEnabled(previousSort)
         self.ui.tableWidget.blockSignals(previous)
 
     def removeRow(self, row) -> None :
         previous = self.ui.tableWidget.blockSignals(True)
-        self.shortcutManager.remove(row)
+        self.shortcutManager.removeShortcutKey(row)
         self.ui.tableWidget.removeRow(row)
         self.ui.tableWidget.blockSignals(previous)
 
@@ -176,27 +148,40 @@ class EventsWidget(QWidget):
         if item.column() == INDEX_COLUMN_SHORTCUT :
             if item.text() != "" :
                 item.setText(item.text().upper())
-                if not self.verifyShortcutForm(item.text()) :
+                if not item.verifyShortcutForm() :
                     QMessageBox.critical(self, "Shortcut Error", "Not a valid shortcut")
                     item.setText("")
-                elif self.verifyShortcutAlreadyUse(item) :
+                elif item.verifyShortcutAlreadyUse() :
                     QMessageBox.critical(self, "Shortcut Error", f"This shortcut \"{item.text()}\" is already use in the table")
                     item.setText("")
                 elif item.text() in self.getAllKeyboardShortcutsValue() :
                     QMessageBox.critical(self, "Shortcut Error", f"This shortcut \"{item.text()}\" is already use in Openshot")
                     item.setText("")
-                
-        self.shortcutManager.update(item.row())
-        self.ui.tableWidget.setCurrentCell(-1, -1)
+        
+        self.shortcutManager.updateFunctor(item.row())
+
         self.ui.tableWidget.blockSignals(previous)
+        self.ui.tableWidget.setCurrentCell(-1, -1)
         self.detectSaveNeeded()
+
+    def on_AddCategory(self) :
+        text, ok = QInputDialog().getText(self, "Add a category", "Please enter the name of the new category")
+        if ok :
+            if not self.categoryManager.addCategory(text) :
+                QMessageBox.warning(self, "Duplicated category", f"The category : {text} already exists")
+
+    def on_RemoveCategory(self):
+        text, ok = QInputDialog().getItem(self, "Remove a category", "Please select the category to be removed", \
+                                           self.categoryManager.listCategory, editable=False)
+        if ok :
+            if not self.categoryManager.removeCategory(text) :
+                QMessageBox.critical(self, "Invalid category", f"The category : {text} does not exists")
 
     def on_btn_ClearShortcut(self):
         pass
         
     def on_btn_Insert(self):
-        rowIndex = self.ui.tableWidget.currentRow() + 1
-        self.insertRow(rowIndex)
+        self.insertRow()
 
     def on_btn_Remove(self):
         rowIndex = self.ui.tableWidget.currentRow()
@@ -222,17 +207,20 @@ class EventsWidget(QWidget):
                 for i in range(self.ui.tableWidget.rowCount()):
                     self.removeRow(0)
                 
+                # Remove previous category before Load
+                self.categoryManager.clearCategory()
+
                 # Add row in table
                 needToDialogWarning = False
-                for i, [red, green, blue, shortcut, category, description] in enumerate(data):
+                for [red, green, blue, shortcut, category, description] in data:
+                    shortcut = shortcut.upper()
                     if shortcut != "" :
-                        shortcut = shortcut.upper()
-                        # Need to verify validity of shortcut
-                        if not self.verifyShortcutForm(shortcut) or \
-                            shortcut in self.getAllKeyboardShortcutsValue() :
+                        if not self.shortcutManager.verifyShortcutForm(shortcut) or \
+                          self.shortcutManager.verifyShortcutAlreadyUse(shortcut) or \
+                          shortcut in self.getAllKeyboardShortcutsValue() :
                             shortcut = ""
                             needToDialogWarning = True
-                    self.insertRow(i, [red, green, blue], shortcut, category, description)
+                    self.insertRow([red, green, blue], shortcut, category, description)
                 
                 # Show DialogBoxWarning (if need)
                 if needToDialogWarning :
@@ -263,9 +251,9 @@ class EventsWidget(QWidget):
         return requested_time
 
     def getDataRow(self, row):
-        color = self.ui.tableWidget.cellWidget(row, ColorWidget.INDEX_COLUMN_COLOR).getColor()
+        color = self.ui.tableWidget.cellWidget(row, INDEX_COLUMN_COLOR).getColor()
         shortcut = self.ui.tableWidget.item(row, INDEX_COLUMN_SHORTCUT).text()
-        category = self.ui.tableWidget.cellWidget(row, ComboCategories.INDEX_COLUMN_CATEGORY).currentText()
+        category = self.ui.tableWidget.cellWidget(row, INDEX_COLUMN_CATEGORY).currentText()
         description = self.ui.tableWidget.item(row, INDEX_COLUMN_DESCRIPTION).text()
         return [color[0], color[1], color[2], shortcut, category, description]
 
@@ -285,28 +273,17 @@ class EventsWidget(QWidget):
                     keyboard_shortcuts.append(setting.get('value').upper())
         return keyboard_shortcuts
 
-    def verifyShortcutAlreadyUse(self, item) -> bool:
-        for i in range(self.ui.tableWidget.rowCount()) :
-            if i != item.row() :
-                if self.ui.tableWidget.item(i, INDEX_COLUMN_SHORTCUT).text() == item.text() :
-                    return True
-        return False
-    
-    def verifyShortcutForm(self, shortcut) -> bool :
-        if re.fullmatch(r"(CTRL\+)?(SHIFT\+)?(ALT\+)?([A-Z]|[0-9])", shortcut) == None and \
-            re.fullmatch(r"(CTRL\+)?(ALT\+)?(SHIFT\+)?([A-Z]|[0-9])", shortcut) == None and \
-            re.fullmatch(r"(SHIFT\+)?(CTRL\+)?(ALT\+)?([A-Z]|[0-9])", shortcut) == None and \
-            re.fullmatch(r"(SHIFT\+)?(ALT\+)?(CTRL\+)?([A-Z]|[0-9])", shortcut) == None and \
-            re.fullmatch(r"(ALT\+)?(CTRL\+)?(SHIFT\+)?([A-Z]|[0-9])", shortcut) == None and \
-            re.fullmatch(r"(ALT\+)?(SHIFT\+)?(CTRL\+)?([A-Z]|[0-9])", shortcut) == None :
-            return False
-        return True
-
     def detectSaveNeeded(self) :
         if self.mainApplication :
             self.mainApplication.project.has_unsaved_changes = True
         if self.mainWindow :
             self.mainWindow.setActionSaveEnabled()
+    
+    def addDefaultCategories(self, listName) -> None :
+        for name in listName :
+                self.categoryManager.addCategory(name, True)
+
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

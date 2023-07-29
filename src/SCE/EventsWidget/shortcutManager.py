@@ -1,4 +1,4 @@
-import sys
+import re
 
 try:
     #Path when import for project Openshot
@@ -48,46 +48,90 @@ class FunctorShortcut():
 
         self.shortcutManager.eventSignal.emit(self.message)
         
-    
 
+        
 class ShortcutManager(QObject):
     try:
         eventSignal = pyqtSignal(Message) # if PyQt5 (Openshot use case)
     except:
         eventSignal = Signal(Message) # if PySide6 (Qtcreator use case)
 
-    def __init__(self, eventsManager) -> None:
+    def __init__(self, eventsManager, tableWidget, columnShortcut):
         super().__init__(eventsManager)
+        self.eventsManager =eventsManager
+        self.tableWidget = tableWidget
+        self.columnShortcut = columnShortcut
 
-        self.eventsManager = eventsManager
-        self.shortcuts = []
-        self.functors = []
+    def addItemShortcut(self, row, name="") -> None :
+        self.tableWidget.setItem(row, self.columnShortcut, ItemShortcut(self, name))
 
-    def add(self, row) -> None:
-        self.shortcuts.insert(row, QShortcut(self.eventsManager))
-        self.functors.insert(row, FunctorShortcut(self))
-        self.shortcuts[row].activated.connect(self.functors[row])
+    def removeShortcutKey(self, row) -> None :
+        itemUserShortcut = self.tableWidget.item(row, self.columnShortcut)
+        if itemUserShortcut :
+            itemUserShortcut.removeShortcutKey()
 
-    def remove(self, row) -> None:
-        self.shortcuts[row].setKey('')
-        try:
-            self.shortcuts[row].activated.disconnect()
-        except:
-            print(end="")
-        finally:
-            del self.shortcuts[row]
-        del self.functors[row]
-
-    def update(self, row) -> None:
-        data = self.eventsManager.getDataRow(row)
-        self.shortcuts[row].setKey(data[3])
-        
-        self.functors[row].message.rgb[0] = data[0]
-        self.functors[row].message.rgb[1] = data[1]
-        self.functors[row].message.rgb[2] = data[2]
-        self.functors[row].message.shortcut = data[3]
-        self.functors[row].message.category = data[4]
-        self.functors[row].message.description = data[5]
+    def updateFunctor(self, row) -> None :
+        itemUserShortcut = self.tableWidget.item(row, self.columnShortcut)
+        if itemUserShortcut :
+            [red, green, blue, shortcut, category, description] = self.eventsManager.getDataRow(row)
+            itemUserShortcut.update([red, green, blue], shortcut, category, description)
 
     def getCurrentTime(self) -> float:
         return self.eventsManager.getCurrentTime()
+
+    def verifyShortcutAlreadyUse(self, name, skipRow = -1) -> bool:
+        if name == "" :
+            return False
+        for i in range(self.tableWidget.rowCount()) :
+            if i == skipRow :
+                continue
+            if self.tableWidget.item(i, self.columnShortcut).text() == name :
+                return True
+        return False
+    
+    def verifyShortcutForm(self, name) -> bool :
+        if name == "" :
+            return True
+        if re.fullmatch(r"(CTRL\+)?(SHIFT\+)?(ALT\+)?([A-Z]|[0-9])", name) == None and \
+            re.fullmatch(r"(CTRL\+)?(ALT\+)?(SHIFT\+)?([A-Z]|[0-9])", name) == None and \
+            re.fullmatch(r"(SHIFT\+)?(CTRL\+)?(ALT\+)?([A-Z]|[0-9])", name) == None and \
+            re.fullmatch(r"(SHIFT\+)?(ALT\+)?(CTRL\+)?([A-Z]|[0-9])", name) == None and \
+            re.fullmatch(r"(ALT\+)?(CTRL\+)?(SHIFT\+)?([A-Z]|[0-9])", name) == None and \
+            re.fullmatch(r"(ALT\+)?(SHIFT\+)?(CTRL\+)?([A-Z]|[0-9])", name) == None :
+            return False
+        return True
+
+class ItemShortcut(QTableWidgetItem):
+    def __init__(self, shortcutManager, name = "") -> None:
+        super().__init__(name.upper())
+        self.shortcutManager = shortcutManager
+
+        # Format
+        self.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.shortcut = QShortcut(self.shortcutManager.eventsManager)
+        self.functor = FunctorShortcut(shortcutManager)
+        self.shortcut.activated.connect(self.functor)
+    
+    def removeShortcutKey(self) -> None:
+        self.shortcut.setKey('')
+        try:
+            self.shortcut.activated.disconnect()
+        except:
+            print(end="")
+
+    def update(self, rgb, shortcut, category, description) -> None:
+        self.shortcut.setKey(shortcut)
+        
+        self.functor.message.rgb[0] = rgb[0]
+        self.functor.message.rgb[1] = rgb[1]
+        self.functor.message.rgb[2] = rgb[2]
+        self.functor.message.shortcut = shortcut
+        self.functor.message.category = category
+        self.functor.message.description = description
+
+    def verifyShortcutAlreadyUse(self) -> bool:
+        return self.shortcutManager.verifyShortcutAlreadyUse(self.text(), self.row())
+    
+    def verifyShortcutForm(self) -> bool :
+        return self.shortcutManager.verifyShortcutForm(self.text())

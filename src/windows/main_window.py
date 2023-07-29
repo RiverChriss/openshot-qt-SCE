@@ -1261,12 +1261,18 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         # Get # of tracks
         all_tracks = get_app().project.get("layers")
         all_tracks.sort(key=lambda x: x['number'], reverse=True)
-        track_number = all_tracks[-1].get("number") - 1000000/2
+        track_number = all_tracks[-1].get("number") - int(round(all_tracks[-1].get("number")/2))
+
+        if track_number <= 2 :
+            self.renumber_all_layers()
+            track_number = all_tracks[-1].get("number") - int(round(all_tracks[-1].get("number")/2))
 
         # Create new track above existing layer(s)
         track = Track()
-        track.data = {"number": track_number, "y": 0, "label": "Analyse", "lock": False}
+        #TODO_SCE:: hardcoder Analysis n'est pas une bonne idée
+        track.data = {"number": track_number, "y": 0, "label": "Analysis", "lock": False}
         track.save()
+        return track_number
 
     def actionAddTrackAbove_trigger(self, checked=True):
         # Get selected track
@@ -3471,14 +3477,43 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         # Set Ref need by EventsManager
         self.EventsManager.setRefFromMainWindow(self, get_app(), self.preview_thread)
 
+        # Add the initial Category in the ComboBox
+        listName = []
+        for track in self.getAllTracks() :
+            if track.get("label") != "Video" :
+                listName.append(track.get("label"))
+        self.EventsManager.addDefaultCategories(listName)
 
-
-        self.EventsManager.shortcutManager.eventSignal.connect(self.on_test)
+        self.EventsManager.shortcutManager.eventSignal.connect(self.on_ShortcutManager)
 
     def setActionSaveEnabled(self) -> None :
         self.actionSave.setEnabled(True)
 
-    def on_test(self, message):
+    def on_ShortcutManager(self, message):
+        noTrackEtiquette = None
+
+        # Verify message.category is not null
+        if message.category == "" :
+            QMessageBox.critical(self, "Missing data", f"The category associated to the shortcut \"{message.shortcut}\" is missing")
+            return
+        
+        # Verify if message.category is Analysis
+        if message.category == "Analysis" :
+            allTracks = self.getAllTracks()
+            for track in allTracks :
+                if track.get("label") != "Analysis" :
+                    continue
+                if self.verifySpaceForEtiquette(track.get("number"), message.timeBegin, message.timeEnd) :
+                    noTrackEtiquette = track.get("number")
+                    break
+            else :
+                # if not a space find for the etiquette analysis need to create a new track
+                noTrackEtiquette = self.actionAddTrack_trigger()
+        else :
+            noTrackEtiquette = self.getNumeroTrack(message.category)
+
+
+        print("++++++++++++++++++++++++++++++++++++")
         print("===============")
         print(f"{message.rgb}")
         print(f"{message.shortcut}")
@@ -3486,3 +3521,23 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         print(f"{message.description}")
         print(f"Time : {message.timeBegin} - {message.timeEnd}")
         print("===============")
+        print(noTrackEtiquette)
+        print("++++++++++++++++++++++++++++++++++++")
+
+    
+    def getAllTracks(self) :
+        return sorted(get_app().project.get("layers"), key=lambda x: x['number'], reverse=True)
+
+    def verifySpaceForEtiquette(self, noTrack, timeBegin, timeEnd) -> bool :
+        if Clip.filter(intersect = timeBegin, layer = noTrack) :
+            return False
+        if Clip.filter(intersect = timeEnd, layer = noTrack) :
+            return False
+        return True
+
+    def getNumeroTrack(self, category) :
+        allTracks = get_app().project.get("layers")
+        for track in allTracks :
+            if track.get("id") == category :
+                return track.get("number")
+        return None
