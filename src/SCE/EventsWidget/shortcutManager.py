@@ -1,4 +1,4 @@
-import sys
+import re
 
 try:
     #Path when import for project Openshot
@@ -56,22 +56,22 @@ class ShortcutManager(QObject):
     except:
         eventSignal = Signal(Message) # if PySide6 (Qtcreator use case)
 
-    def __init__(self, eventsManager, tableWidget, columnItemUserShortcut):
+    def __init__(self, eventsManager, tableWidget, columnShortcut):
         super().__init__(eventsManager)
         self.eventsManager =eventsManager
         self.tableWidget = tableWidget
-        self.columnItemUserShortcut = columnItemUserShortcut
+        self.columnShortcut = columnShortcut
 
     def addItemShortcut(self, row, name="") -> None :
-        self.tableWidget.setItem(row, self.columnItemUserShortcut, ItemShortcut(self, name))
+        self.tableWidget.setItem(row, self.columnShortcut, ItemShortcut(self, name))
 
     def removeShortcutKey(self, row) -> None :
-        itemUserShortcut = self.tableWidget.item(row, self.columnItemUserShortcut)
+        itemUserShortcut = self.tableWidget.item(row, self.columnShortcut)
         if itemUserShortcut :
             itemUserShortcut.removeShortcutKey()
 
     def updateFunctor(self, row) -> None :
-        itemUserShortcut = self.tableWidget.item(row, self.columnItemUserShortcut)
+        itemUserShortcut = self.tableWidget.item(row, self.columnShortcut)
         if itemUserShortcut :
             [red, green, blue, shortcut, category, description] = self.eventsManager.getDataRow(row)
             itemUserShortcut.update([red, green, blue], shortcut, category, description)
@@ -79,11 +79,31 @@ class ShortcutManager(QObject):
     def getCurrentTime(self) -> float:
         return self.eventsManager.getCurrentTime()
 
-
+    def verifyShortcutAlreadyUse(self, name, skipRow = -1) -> bool:
+        if name == "" :
+            return False
+        for i in range(self.tableWidget.rowCount()) :
+            if i == skipRow :
+                continue
+            if self.tableWidget.item(i, self.columnShortcut).text() == name :
+                return True
+        return False
+    
+    def verifyShortcutForm(self, name) -> bool :
+        if name == "" :
+            return True
+        if re.fullmatch(r"(CTRL\+)?(SHIFT\+)?(ALT\+)?([A-Z]|[0-9])", name) == None and \
+            re.fullmatch(r"(CTRL\+)?(ALT\+)?(SHIFT\+)?([A-Z]|[0-9])", name) == None and \
+            re.fullmatch(r"(SHIFT\+)?(CTRL\+)?(ALT\+)?([A-Z]|[0-9])", name) == None and \
+            re.fullmatch(r"(SHIFT\+)?(ALT\+)?(CTRL\+)?([A-Z]|[0-9])", name) == None and \
+            re.fullmatch(r"(ALT\+)?(CTRL\+)?(SHIFT\+)?([A-Z]|[0-9])", name) == None and \
+            re.fullmatch(r"(ALT\+)?(SHIFT\+)?(CTRL\+)?([A-Z]|[0-9])", name) == None :
+            return False
+        return True
 
 class ItemShortcut(QTableWidgetItem):
-    def __init__(self, shortcutManager, name="") -> None:
-        super().__init__(name)
+    def __init__(self, shortcutManager, name = "") -> None:
+        super().__init__(name.upper())
         self.shortcutManager = shortcutManager
 
         # Format
@@ -109,3 +129,9 @@ class ItemShortcut(QTableWidgetItem):
         self.functor.message.shortcut = shortcut
         self.functor.message.category = category
         self.functor.message.description = description
+
+    def verifyShortcutAlreadyUse(self) -> bool:
+        return self.shortcutManager.verifyShortcutAlreadyUse(self.text(), self.row())
+    
+    def verifyShortcutForm(self) -> bool :
+        return self.shortcutManager.verifyShortcutForm(self.text())
