@@ -1,16 +1,9 @@
 import re
 
-try:
-    #Path when import for project Openshot
-    from SCE.EventsWidget.ui_eventswidget import Ui_EventsWidget # I use this include to test Openshot vs Qtcreator
-    from PyQt5.QtWidgets import *
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-except ImportError:
-    #Path when import for QtCreator (laungh this project)
-    from PySide6.QtWidgets import *
-    from PySide6.QtGui import *
-    from PySide6.QtCore import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+
 
 class Message():
     def __init__(self) -> None:
@@ -51,10 +44,7 @@ class FunctorShortcut():
 
         
 class ShortcutManager(QObject):
-    try:
-        eventSignal = pyqtSignal(Message) # if PyQt5 (Openshot use case)
-    except:
-        eventSignal = Signal(Message) # if PySide6 (Qtcreator use case)
+    eventSignal = pyqtSignal(Message)
 
     def __init__(self, eventsManager, tableWidget, columnShortcut):
         super().__init__(eventsManager)
