@@ -4,7 +4,7 @@ import openshot
 
 from classes import info
 from classes.image_types import get_media_type
-from classes.query import Clip, Track
+from classes.query import Clip
 
 class Tag() :
     objectPath = os.path.join(info.IMAGES_PATH, "Tag.svg")
@@ -14,8 +14,9 @@ class Tag() :
         self.object = Clip()
         self.object.data = json.loads(objectOpenShot.Json(), strict=False)
          
-         # Add missing info in the json reader
+         # Add missing info in the json
         self.object.data["reader"]["media_type"] = get_media_type(self.object.data["reader"])
+        self.object.data["file_id"] = ""
 
         # Update info
         self.object.data["layer"] = numeroTrack
@@ -35,5 +36,3 @@ class Tag() :
 
     def save(self):
         self.object.save()
-    
-    
