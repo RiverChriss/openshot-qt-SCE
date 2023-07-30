@@ -3480,9 +3480,9 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
 
         # Add the initial Category in the ComboBox
         listName = []
-        for track in self.getAllTracks() :
-            if track.get("label") != "Video" :
-                listName.append(track.get("label"))
+        for track in Track.filter() :
+            if track.data.get("label") != "Video" :
+                listName.append(track.data.get("label"))
         self.EventsManager.addDefaultCategories(listName)
 
         self.EventsManager.shortcutManager.eventSignal.connect(self.on_ShortcutManager)
@@ -3499,17 +3499,17 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             QMessageBox.critical(self, "Missing data", f"The category associated to the shortcut \"{message.shortcut}\" is missing")
             return
 
-        noTrackEtiquette = None
-        for track in self.getAllTracks() :
-            if track.get("label") == message.category :
-                noTrackEtiquette = track.get("number")
+        numeroTrack = None
+        for track in Track.filter() :
+            if track.data.get("label") == message.category :
+                numeroTrack = track.data.get("number")
                 break
-        if not noTrackEtiquette :
-            noTrackEtiquette = self.actionAddTrack_trigger(name=message.category)
+        if not numeroTrack :
+            numeroTrack = self.actionAddTrack_trigger(name=message.category)
 
         color = QColor(message.rgb[0], message.rgb[1], message.rgb[2]) 
         
-        test = Tag(noTrackEtiquette, color.name(), message.description, message.timeBegin, message.timeEnd - message.timeBegin)
+        test = Tag(numeroTrack, color.name(), message.description, message.timeBegin, message.timeEnd - message.timeBegin)
         test.save()
 
         print("++++++++++++++++++++++++++++++++++++")
@@ -3520,11 +3520,9 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         print(f"{message.description}")
         print(f"Time : {message.timeBegin} - {message.timeEnd}")
         print("===============")
-        print(noTrackEtiquette)
+        print(numeroTrack)
         print("++++++++++++++++++++++++++++++++++++")
 
-    def getAllTracks(self) :
-        return sorted(get_app().project.get("layers"), key=lambda x: x['number'], reverse=True)
 
     def verifySpaceForEtiquette(self, noTrack, timeBegin, timeEnd) -> bool :
         if Clip.filter(intersect = timeBegin, layer = noTrack) :
@@ -3532,10 +3530,3 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         if Clip.filter(intersect = timeEnd, layer = noTrack) :
             return False
         return True
-
-    def getNumeroTrack(self, category) :
-        allTracks = get_app().project.get("layers")
-        for track in allTracks :
-            if track.get("id") == category :
-                return track.get("number")
-        return None
