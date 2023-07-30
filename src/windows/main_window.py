@@ -41,7 +41,7 @@ from PyQt5.QtCore import (
     Qt, pyqtSignal, pyqtSlot, QCoreApplication, PYQT_VERSION_STR,
     QTimer, QDateTime, QFileInfo, QUrl, QEvent
     )
-from PyQt5.QtGui import QIcon, QCursor, QKeySequence, QTextCursor
+from PyQt5.QtGui import QIcon, QCursor, QKeySequence, QTextCursor, QColor
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QDockWidget,
     QMessageBox, QDialog, QFileDialog, QInputDialog,
@@ -80,6 +80,8 @@ from windows.views.webview import TimelineWebView
 from windows.views.transitions_listview import TransitionsListView
 from windows.views.transitions_treeview import TransitionsTreeView
 from windows.views.tutorial import TutorialManager
+
+from SCE.Tag.tag import Tag
 
 
 class MainWindow(updates.UpdateWatcher, QMainWindow):
@@ -1255,7 +1257,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             " (inserted {} at {})".format(insert_num, insert_at) if insert_at else "")
         )
 
-    def actionAddTrack_trigger(self, checked=True):
+    def actionAddTrack_trigger(self, checked=True, name="") -> int:
         log.info("actionAddTrack_trigger")
 
         # Get # of tracks
@@ -1267,10 +1269,9 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             self.renumber_all_layers()
             track_number = all_tracks[-1].get("number") - int(round(all_tracks[-1].get("number")/2))
 
-        # Create new track above existing layer(s)
+        # Create new track below existing layer(s)
         track = Track()
-        #TODO_SCE:: hardcoder Analysis n'est pas une bonne idée
-        track.data = {"number": track_number, "y": 0, "label": "Analysis", "lock": False}
+        track.data = {"number": track_number, "y": 0, "label": name, "lock": False}
         track.save()
         return track_number
 
@@ -3479,54 +3480,47 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
 
         # Add the initial Category in the ComboBox
         listName = []
-        for track in self.getAllTracks() :
-            if track.get("label") != "Video" :
-                listName.append(track.get("label"))
+        for track in Track.filter() :
+            if track.data.get("label") != "Video" :
+                listName.append(track.data.get("label"))
         self.EventsManager.addDefaultCategories(listName)
 
         self.EventsManager.shortcutManager.eventSignal.connect(self.on_ShortcutManager)
 
+
+
     def setActionSaveEnabled(self) -> None :
         self.actionSave.setEnabled(True)
 
-    def on_ShortcutManager(self, message):
-        noTrackEtiquette = None
 
+    def on_ShortcutManager(self, message):
         # Verify message.category is not null
         if message.category == "" :
             QMessageBox.critical(self, "Missing data", f"The category associated to the shortcut \"{message.shortcut}\" is missing")
             return
-        
-        # Verify if message.category is Analysis
-        if message.category == "Analysis" :
-            allTracks = self.getAllTracks()
-            for track in allTracks :
-                if track.get("label") != "Analysis" :
-                    continue
-                if self.verifySpaceForEtiquette(track.get("number"), message.timeBegin, message.timeEnd) :
-                    noTrackEtiquette = track.get("number")
-                    break
-            else :
-                # if not a space find for the etiquette analysis need to create a new track
-                noTrackEtiquette = self.actionAddTrack_trigger()
-        else :
-            noTrackEtiquette = self.getNumeroTrack(message.category)
 
+        tagTrackNumber = None
+        for track in Track.filter() :
+            if track.data.get("label") == message.category :
+                tagTrackNumber = track.data.get("number")
+                break
+        if not tagTrackNumber :
+            tagTrackNumber = self.actionAddTrack_trigger(name=message.category)
+
+        
+        Tag(tagTrackNumber, message.colorHex, message.description, message.timeBegin, message.timeEnd - message.timeBegin).save()
 
         print("++++++++++++++++++++++++++++++++++++")
         print("===============")
-        print(f"{message.rgb}")
+        print(f"{message.colorHex}")
         print(f"{message.shortcut}")
         print(f"{message.category}")
         print(f"{message.description}")
         print(f"Time : {message.timeBegin} - {message.timeEnd}")
         print("===============")
-        print(noTrackEtiquette)
+        print(tagTrackNumber)
         print("++++++++++++++++++++++++++++++++++++")
 
-    
-    def getAllTracks(self) :
-        return sorted(get_app().project.get("layers"), key=lambda x: x['number'], reverse=True)
 
     def verifySpaceForEtiquette(self, noTrack, timeBegin, timeEnd) -> bool :
         if Clip.filter(intersect = timeBegin, layer = noTrack) :
@@ -3534,10 +3528,3 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         if Clip.filter(intersect = timeEnd, layer = noTrack) :
             return False
         return True
-
-    def getNumeroTrack(self, category) :
-        allTracks = get_app().project.get("layers")
-        for track in allTracks :
-            if track.get("id") == category :
-                return track.get("number")
-        return None

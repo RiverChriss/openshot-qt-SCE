@@ -14,7 +14,7 @@ except ImportError:
 
 class Message():
     def __init__(self) -> None:
-        self.rgb = ['', '', '']     # [R, G, B]
+        self.colorHex = ""
         self.shortcut = ""
         self.category = ""
         self.description = ""
@@ -66,15 +66,15 @@ class ShortcutManager(QObject):
         self.tableWidget.setItem(row, self.columnShortcut, ItemShortcut(self, name))
 
     def removeShortcutKey(self, row) -> None :
-        itemUserShortcut = self.tableWidget.item(row, self.columnShortcut)
-        if itemUserShortcut :
-            itemUserShortcut.removeShortcutKey()
+        itemShortcut = self.tableWidget.item(row, self.columnShortcut)
+        if itemShortcut :
+            itemShortcut.removeShortcutKey()
 
     def updateFunctor(self, row) -> None :
-        itemUserShortcut = self.tableWidget.item(row, self.columnShortcut)
-        if itemUserShortcut :
-            [red, green, blue, shortcut, category, description] = self.eventsManager.getDataRow(row)
-            itemUserShortcut.update([red, green, blue], shortcut, category, description)
+        itemShortcut = self.tableWidget.item(row, self.columnShortcut)
+        if itemShortcut :
+            [color, shortcut, category, description] = self.eventsManager.getDataRow(row)
+            itemShortcut.update(color, shortcut, category, description)
 
     def getCurrentTime(self) -> float:
         return self.eventsManager.getCurrentTime()
@@ -120,12 +120,10 @@ class ItemShortcut(QTableWidgetItem):
         except:
             print(end="")
 
-    def update(self, rgb, shortcut, category, description) -> None:
+    def update(self, colorHex, shortcut, category, description) -> None:
         self.shortcut.setKey(shortcut)
         
-        self.functor.message.rgb[0] = rgb[0]
-        self.functor.message.rgb[1] = rgb[1]
-        self.functor.message.rgb[2] = rgb[2]
+        self.functor.message.colorHex = colorHex
         self.functor.message.shortcut = shortcut
         self.functor.message.category = category
         self.functor.message.description = description
