@@ -3507,14 +3507,12 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         if not numeroTrack :
             numeroTrack = self.actionAddTrack_trigger(name=message.category)
 
-        color = QColor(message.rgb[0], message.rgb[1], message.rgb[2]) 
         
-        test = Tag(numeroTrack, color.name(), message.description, message.timeBegin, message.timeEnd - message.timeBegin)
-        test.save()
+        Tag(numeroTrack, message.colorHex, message.description, message.timeBegin, message.timeEnd - message.timeBegin).save()
 
         print("++++++++++++++++++++++++++++++++++++")
         print("===============")
-        print(f"{message.rgb}")
+        print(f"{message.colorHex}")
         print(f"{message.shortcut}")
         print(f"{message.category}")
         print(f"{message.description}")

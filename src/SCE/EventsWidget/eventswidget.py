@@ -30,34 +30,33 @@ INDEX_COLUMN_SHORTCUT = 1
 INDEX_COLUMN_CATEGORY = 2
 INDEX_COLUMN_DESCRIPTION = 3
 
-HEADER_REF = ["ColorR", "ColorG", "ColorB", "Shortcut", "Category", "Description"]
+HEADER_REF = ["ColorHex", "Shortcut", "Category", "Description"]
 
 class ColorWidget(QPushButton):
-    DEFAULT_COLOR = [50, 50, 50]
+    DEFAULT_COLOR = "#323232"
 
-    def __init__(self, eventsWidget, rgb=DEFAULT_COLOR):
+    def __init__(self, eventsWidget, colorHex=DEFAULT_COLOR):
         super().__init__(eventsWidget)
         self.itemQtTable = QTableWidgetItem(QTableWidgetItem.ItemType.UserType)
         self.eventsWidget = eventsWidget
-        self.color = rgb
-        self.SetBackgroundColor(self.color[0], self.color[1], self.color[2])
+        self.color = colorHex
+        self.SetBackgroundColor()
 
         self.clicked.connect(self.on_clicked)
 
     def on_clicked(self):
         color = QColorDialog.getColor()
         if color.isValid() :
-            if self.color !=  [color.red(), color.green(), color.blue()] :
-                self.color = [color.red(), color.green(), color.blue()]
-                self.SetBackgroundColor(color.red(), color.green(), color.blue())
+            if self.color !=  color.name() :
+                self.color = color.name()
+                self.SetBackgroundColor()
                 self.eventsWidget.shortcutManager.updateFunctor(self.itemQtTable.row())
                 self.eventsWidget.detectSaveNeeded()
         self.itemQtTable.tableWidget().setCurrentCell(-1, -1)
 
-    def SetBackgroundColor(self, red, green, blue):
-        color = f"rgb({red}, {green}, {blue})"
+    def SetBackgroundColor(self):
         self.setStyleSheet("background-color: "
-                            f"qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 {color}, stop: 1 {color});"
+                            f"qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 {self.color}, stop: 1 {self.color});"
                             "margin-left: 10px;"
                             "margin-right: 10px;")
         
@@ -112,7 +111,7 @@ class EventsWidget(QWidget):
         self.mainApplication = mainApplication
         self.playerWorker = playerWorker
 
-    def insertRow(self, rgb=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description="") -> None:
+    def insertRow(self, colorHex=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description="") -> None:
         row = 0
         previous = self.ui.tableWidget.blockSignals(True)
         previousSort = self.ui.tableWidget.isSortingEnabled()
@@ -124,7 +123,7 @@ class EventsWidget(QWidget):
 
         self.categoryManager.addComboBox(row, category)
 
-        colorItem = ColorWidget(self,rgb)
+        colorItem = ColorWidget(self, colorHex)
         colorItem.addSelfToTable(self.ui.tableWidget, row)
 
         itemDescription = QTableWidgetItem()
@@ -212,7 +211,7 @@ class EventsWidget(QWidget):
 
                 # Add row in table
                 needToDialogWarning = False
-                for [red, green, blue, shortcut, category, description] in data:
+                for [colorHex, shortcut, category, description] in data:
                     shortcut = shortcut.upper()
                     if shortcut != "" :
                         if not self.shortcutManager.verifyShortcutForm(shortcut) or \
@@ -220,7 +219,7 @@ class EventsWidget(QWidget):
                           shortcut in self.getAllKeyboardShortcutsValue() :
                             shortcut = ""
                             needToDialogWarning = True
-                    self.insertRow([red, green, blue], shortcut, category, description)
+                    self.insertRow(colorHex, shortcut, category, description)
                 
                 # Show DialogBoxWarning (if need)
                 if needToDialogWarning :
@@ -255,7 +254,7 @@ class EventsWidget(QWidget):
         shortcut = self.ui.tableWidget.item(row, INDEX_COLUMN_SHORTCUT).text()
         category = self.ui.tableWidget.cellWidget(row, INDEX_COLUMN_CATEGORY).currentText()
         description = self.ui.tableWidget.item(row, INDEX_COLUMN_DESCRIPTION).text()
-        return [color[0], color[1], color[2], shortcut, category, description]
+        return [color, shortcut, category, description]
 
     def getDataTable(self):
         data = []
