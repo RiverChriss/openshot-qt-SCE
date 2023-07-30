@@ -1547,9 +1547,9 @@ App.controller("TimelineCtrl", function ($scope) {
         if($scope.project.clips[clip_index].id === clip_id) {
           
           // Checks if the color property is not null and returns it to color the canvas in Index.html
-          if($scope.project.clips[clip_index].color) {
+          if($scope.project.clips[clip_index].tag_Object) {
           
-            return $scope.project.clips[clip_index].color
+            return $scope.project.clips[clip_index].tag_Object.color_hex
           }
 
         }

@@ -81,6 +81,8 @@ from windows.views.transitions_listview import TransitionsListView
 from windows.views.transitions_treeview import TransitionsTreeView
 from windows.views.tutorial import TutorialManager
 
+from SCE.Tag.tag import Tag
+
 
 class MainWindow(updates.UpdateWatcher, QMainWindow):
     """ This class contains the logic for the main window widget """
@@ -3505,7 +3507,10 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         if not noTrackEtiquette :
             noTrackEtiquette = self.actionAddTrack_trigger(name=message.category)
 
-        self.createTagSCE(message)
+        color = QColor(message.rgb[0], message.rgb[1], message.rgb[2]) 
+        
+        test = Tag(noTrackEtiquette, color.name(), message.description, message.timeBegin, message.timeEnd - message.timeBegin)
+        test.save()
 
         print("++++++++++++++++++++++++++++++++++++")
         print("===============")
@@ -3518,7 +3523,6 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         print(noTrackEtiquette)
         print("++++++++++++++++++++++++++++++++++++")
 
-    
     def getAllTracks(self) :
         return sorted(get_app().project.get("layers"), key=lambda x: x['number'], reverse=True)
 
@@ -3535,28 +3539,3 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             if track.get("id") == category :
                 return track.get("number")
         return None
-
-    def createTagSCE(self, message):
-
-       #Setup the clip object and load its data
-       r = openshot.FFmpegReader("videoTest.webm")
-       c = openshot.Clip(r)
-       clip = Clip()
-       clip.data = {}
-       new_clip = json.loads(c.Json(), strict=False)
-
-       #Modify the clip properties with the relevant data
-       #TODO:: Play with layer and position to place the clip in the right track
-       new_clip["layer"] = 6000000
-       new_clip["position"] = 0.0
-       new_clip["alpha"]["Points"][0]["co"]["Y"] = 0.0
-       new_clip["has_video"]["Points"][0]["co"]["Y"]  = 0.0
-       new_clip["has_audio"]["Points"][0]["co"]["Y"]  = 0.0
-
-       #Receive the color from the event manager linked to the shortcut used (.name() converts the RGB value to hex)
-       color = QColor(message.rgb[0], message.rgb[1], message.rgb[2]) 
-       new_clip["color"] = color.name()
-       
-       #Save the clip data
-       clip.data = new_clip
-       clip.save()
