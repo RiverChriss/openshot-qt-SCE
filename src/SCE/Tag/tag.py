@@ -9,7 +9,7 @@ from classes.query import Clip
 class Tag() :
     objectPath = os.path.join(info.IMAGES_PATH, "Tag.svg")
 
-    def __init__(self, numeroTrack, colorHex, text, position, end):
+    def __init__(self, trackNumber, colorHex, text, position, end):
         objectOpenShot = openshot.Clip(Tag.objectPath)
         self.object = Clip()
         self.object.data = json.loads(objectOpenShot.Json(), strict=False)
@@ -19,7 +19,7 @@ class Tag() :
         self.object.data["file_id"] = ""
 
         # Update info
-        self.object.data["layer"] = numeroTrack
+        self.object.data["layer"] = trackNumber
         self.object.data["position"] = position
         self.object.data["end"] = end
 
@@ -29,9 +29,9 @@ class Tag() :
         self.object.data["has_audio"]["Points"][0]["co"]["Y"]  = 0.0
 
         # Add new dicionary for addition info only for Tag
-        self.object.data["tag_Object"] = {}
-        self.object.data["tag_Object"]["color_hex"] = colorHex
-        self.object.data["tag_Object"]["text"] = text
+        self.object.data["tag"] = {}
+        self.object.data["tag"]["color"] = colorHex
+        self.object.data["tag"]["text"] = text
 
 
     def save(self):

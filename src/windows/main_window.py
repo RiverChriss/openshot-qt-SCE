@@ -3499,16 +3499,16 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             QMessageBox.critical(self, "Missing data", f"The category associated to the shortcut \"{message.shortcut}\" is missing")
             return
 
-        numeroTrack = None
+        tagTrackNumber = None
         for track in Track.filter() :
             if track.data.get("label") == message.category :
-                numeroTrack = track.data.get("number")
+                tagTrackNumber = track.data.get("number")
                 break
-        if not numeroTrack :
-            numeroTrack = self.actionAddTrack_trigger(name=message.category)
+        if not tagTrackNumber :
+            tagTrackNumber = self.actionAddTrack_trigger(name=message.category)
 
         
-        Tag(numeroTrack, message.colorHex, message.description, message.timeBegin, message.timeEnd - message.timeBegin).save()
+        Tag(tagTrackNumber, message.colorHex, message.description, message.timeBegin, message.timeEnd - message.timeBegin).save()
 
         print("++++++++++++++++++++++++++++++++++++")
         print("===============")
@@ -3518,7 +3518,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         print(f"{message.description}")
         print(f"Time : {message.timeBegin} - {message.timeEnd}")
         print("===============")
-        print(numeroTrack)
+        print(tagTrackNumber)
         print("++++++++++++++++++++++++++++++++++++")
 
 

@@ -101,8 +101,12 @@
 					<br class="cleared">
 
 					<div ng-if="!clip.ui.audio_data || (clip.ui.audio_data && clip.ui.audio_data.length <= 1)" class="thumb-container">
-						<!-- <img class="thumb thumb-start" ng-if="getThumbPath(clip)" ng-src="{{ getThumbPath(clip) }}"/> -->
-						<canvas style="background-color: {{ GetColorSCE(clip.id) }}; border-radius: 8px;" tl-audio height="62px" width="{{canvasMaxWidth((clip.end - clip.start) * pixelsPerSecond)}}px" class="thumb-container"></canvas>
+						<div ng-if="clip.tag">
+							<canvas style="background-color: {{clip.tag.color}}; border-radius: 8px;" tl-audio height="62px" width="{{canvasMaxWidth((clip.end - clip.start) * pixelsPerSecond)}}px" class="thumb-container"></canvas>
+						</div>
+						<div ng-if="!clip.tag">
+							<img class="thumb thumb-start" ng-if="getThumbPath(clip)" ng-src="{{ getThumbPath(clip) }}"/>
+						</div>
 					</div>
 					<div ng-if="clip.ui.audio_data && clip.ui.audio_data.length > 1" class="audio-container">
 						<canvas id="audio_clip_{{clip.id}}" tl-audio height="46px" width="{{canvasMaxWidth((clip.end - clip.start) * pixelsPerSecond)}}px" class="audio"></canvas>
