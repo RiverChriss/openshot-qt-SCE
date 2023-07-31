@@ -5,6 +5,8 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
 
+from classes.query import Marker
+
 class Message():
     def __init__(self) -> None:
         self.colorHex = ""
@@ -23,16 +25,22 @@ class FunctorShortcut():
 
         # Data Store
         self.message = Message()
+        self.initMarker()
 
     def __call__(self) -> None:
         if (self.compteurClick % 2) == 0 :
             # Fist click
             self.message.timeBegin = self.shortcutManager.getCurrentTime()
             self.compteurClick += 1
-            print(f"La touche {self.message.shortcut} a été cliquer 1 seule fois à {self.message.timeBegin}")
+            self.setMarker(self.message.colorHex, self.message.timeBegin)
+            self.marker.save()
+            print(f"Shortcut \"{self.message.shortcut}\" click time : {self.message.timeBegin}")
             return
         
         # Second click
+        self.marker.delete()
+        self.initMarker()
+
         self.message.timeEnd = self.shortcutManager.getCurrentTime()
         self.compteurClick = 0
 
@@ -41,6 +49,13 @@ class FunctorShortcut():
 
         self.shortcutManager.eventSignal.emit(self.message)
         
+    def initMarker(self) :
+        self.marker = Marker()
+        self.marker.data = {"icon": "blue.png","vector": "blue"} # Default Marker Openshot
+    
+    def setMarker(self, color, position = 0) :
+        self.marker.data["position"] = position
+        self.marker.data["shortcut"] = {"color": color}
 
         
 class ShortcutManager(QObject):
@@ -55,10 +70,18 @@ class ShortcutManager(QObject):
     def addItemShortcut(self, row, name="") -> None :
         self.tableWidget.setItem(row, self.columnShortcut, ItemShortcut(self, name))
 
-    def removeShortcutKey(self, row) -> None :
+    def remove(self, row) -> None :
         itemShortcut = self.tableWidget.item(row, self.columnShortcut)
         if itemShortcut :
             itemShortcut.removeShortcutKey()
+            itemShortcut.removeMarker()
+            itemShortcut.resetClick()
+
+    def resetMemory(self, row) -> None :
+        itemShortcut = self.tableWidget.item(row, self.columnShortcut)
+        if itemShortcut :
+            itemShortcut.removeMarker()
+            itemShortcut.resetClick()
 
     def updateFunctor(self, row) -> None :
         itemShortcut = self.tableWidget.item(row, self.columnShortcut)
@@ -109,6 +132,13 @@ class ItemShortcut(QTableWidgetItem):
             self.shortcut.activated.disconnect()
         except:
             print(end="")
+
+    def removeMarker(self) -> None:
+        self.functor.marker.delete()
+        self.functor.initMarker()
+
+    def resetClick(self) -> None:
+        self.functor.compteurClick = 0
 
     def update(self, colorHex, shortcut, category, description) -> None:
         self.shortcut.setKey(shortcut)
