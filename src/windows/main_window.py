@@ -343,6 +343,9 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         # Update max size (for fast previews)
         self.MaxSizeChanged.emit(self.videoPreview.size())
 
+        # EventManager need a reset memory
+        self.EventsManager.resetMemory()
+
     def actionAnimatedTitle_trigger(self):
         # show dialog
         from windows.animated_title import AnimatedTitle
@@ -3506,20 +3509,8 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
                 break
         if not tagTrackNumber :
             tagTrackNumber = self.actionAddTrack_trigger(name=message.category)
-
-        
         Tag(tagTrackNumber, message.colorHex, message.description, message.timeBegin, message.timeEnd - message.timeBegin).save()
 
-        print("++++++++++++++++++++++++++++++++++++")
-        print("===============")
-        print(f"{message.colorHex}")
-        print(f"{message.shortcut}")
-        print(f"{message.category}")
-        print(f"{message.description}")
-        print(f"Time : {message.timeBegin} - {message.timeEnd}")
-        print("===============")
-        print(tagTrackNumber)
-        print("++++++++++++++++++++++++++++++++++++")
 
 
     def verifySpaceForEtiquette(self, noTrack, timeBegin, timeEnd) -> bool :

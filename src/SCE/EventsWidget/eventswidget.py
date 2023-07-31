@@ -138,7 +138,7 @@ class EventsWidget(QWidget):
 
     def removeRow(self, row) -> None :
         previous = self.ui.tableWidget.blockSignals(True)
-        self.shortcutManager.removeShortcutKey(row)
+        self.shortcutManager.remove(row)
         self.ui.tableWidget.removeRow(row)
         self.ui.tableWidget.blockSignals(previous)
 
@@ -231,6 +231,9 @@ class EventsWidget(QWidget):
             print("ERROR : Unable to import the event list")
 
     def exportEventsManager(self, file_path) -> None:
+        # Need to remove shortcut Marker and state shortcut click
+        self.resetMemory()
+
         try :
             data = self.getDataTable()
             with open(file_path, 'w', newline="") as file:
@@ -240,6 +243,11 @@ class EventsWidget(QWidget):
                 file.close()
         except :
             print("ERROR : Unable to export the event list")
+
+    def resetMemory(self):
+        for i in range(self.ui.tableWidget.rowCount()) :
+            self.shortcutManager.resetMemory(i)
+
 
     def getCurrentTime(self) -> float :
         if not self.playerWorker :
