@@ -21,6 +21,7 @@ class Tag() :
         # Update info
         self.object.data["layer"] = trackNumber
         self.object.data["position"] = position
+        self.object.data["start"] = 0.0
         self.object.data["end"] = end
 
         # Make the Clip invisible

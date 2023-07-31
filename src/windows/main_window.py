@@ -863,7 +863,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         export_xml()
 
     def actionExportTagToCSV_trigger(self):
-        header = ["Description", "Color", "Track", "Position", "Duration"]
+        header = ["Description", "Color", "Track", "Position", "TrimStart", "TrimEnd", "Duration"]
         data = []
         clips = Clip.filter()
         for clip in clips :
@@ -879,8 +879,10 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             data.append([clip.data["tag"]["text"], \
                          clip.data["tag"]["color"],\
                          nameTrack, \
-                         clip.data["position"], \
-                         clip.data["end"]])
+                         round(clip.data["position"], 4), \
+                         round(clip.data["start"], 4), \
+                         round(clip.data["end"], 4),
+                         round(clip.data["end"]-clip.data["start"], 4)])
         
 
         file_path = get_app().project.current_filepath
