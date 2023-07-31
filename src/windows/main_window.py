@@ -862,7 +862,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         """Export XML (Final Cut Pro) File"""
         export_xml()
 
-    def actionExportTagToCSV_trigger(self):
+    def actionExportTagsToCSV_trigger(self):
         header = ["Description", "Color", "Track", "Position", "TrimStart", "TrimEnd", "Duration"]
         data = []
         clips = Clip.filter()
@@ -891,7 +891,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         file_path = get_app().project.current_filepath
         if not file_path:
             return 
-        file_path = os.path.join(get_assets_path(file_path, False), "TagOnTimeline.csv")
+        file_path = os.path.join(get_assets_path(file_path, False), "ExportSCE.csv")
         
         print(file_path)
 
