@@ -35,6 +35,7 @@ from time import sleep
 from uuid import uuid4
 import json
 import uuid
+import csv
 
 import openshot  # Python module for libopenshot (required video editing module installed separately)
 from PyQt5.QtCore import (
@@ -857,6 +858,48 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
     def actionExportFCPXML_trigger(self, checked=True):
         """Export XML (Final Cut Pro) File"""
         export_xml()
+
+    def actionExportTagToCSV_trigger(self):
+        header = ["Description", "Color", "Track", "Position", "Duration"]
+        data = []
+        clips = Clip.filter()
+        for clip in clips :
+            if not clip.data.get("tag") :
+                continue
+
+            trackNumber = clip.data.get("layer")
+            track = Track.get(number=trackNumber)
+            nameTrack = ""
+            if track :
+                nameTrack = track.data.get("label")
+            
+            data.append([clip.data["tag"]["text"], \
+                         clip.data["tag"]["color"],\
+                         nameTrack, \
+                         clip.data["position"], \
+                         clip.data["end"]])
+        
+
+        file_path = get_app().project.current_filepath
+        if not file_path:
+            self.actionSave_trigger()
+        file_path = get_app().project.current_filepath
+        if not file_path:
+            return 
+        file_path = os.path.join(get_assets_path(file_path, False), "TagOnTimeline.csv")
+        
+        print(file_path)
+
+        try :
+            with open(file_path, 'w', newline="")as file:
+                csvWriter = csv.writer(file)
+                csvWriter.writerow(header)
+                csvWriter.writerows(data)
+                file.close()
+        except :
+            log.error("Not able to export Tags in the CSV file")
+
+
 
     def actionImportEDL_trigger(self, checked=True):
         """Import EDL File"""
@@ -3498,6 +3541,11 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         if message.category == "" :
             QMessageBox.critical(self, "Missing data", f"The category associated to the shortcut \"{message.shortcut}\" is missing")
             return
+        duration = abs(message.timeEnd - message.timeBegin)
+        if duration <= 0.0001 :
+            log.info("The shortcut have the same time use")
+            log.info("The tag is not add to the timeline")
+            return
 
         tagTrackNumber = None
         for track in Track.filter() :
@@ -3508,7 +3556,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             tagTrackNumber = self.actionAddTrack_trigger(name=message.category)
 
         
-        Tag(tagTrackNumber, message.colorHex, message.description, message.timeBegin, message.timeEnd - message.timeBegin).save()
+        Tag(tagTrackNumber, message.colorHex, message.description, message.timeBegin, duration).save()
 
         print("++++++++++++++++++++++++++++++++++++")
         print("===============")
