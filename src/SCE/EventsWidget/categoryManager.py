@@ -1,16 +1,8 @@
-import sys
 
-try:
-    #Path when import for project Openshot
-    from SCE.EventsWidget.ui_eventswidget import Ui_EventsWidget # I use this include to test Openshot vs Qtcreator
-    from PyQt5.QtWidgets import *
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-except ImportError:
-    #Path when import for QtCreator (laungh this project)
-    from PySide6.QtWidgets import *
-    from PySide6.QtGui import *
-    from PySide6.QtCore import *
+
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
 
 class ComboCategory(QComboBox):
@@ -58,10 +50,7 @@ class ComboCategory(QComboBox):
         table.blockSignals(previous)
 
 class CategoryManager(QObject) :
-    try:
-        listCountSignal = pyqtSignal(int) # if PyQt5 (Openshot use case)
-    except:
-        listCountSignal = Signal(int) # if PySide6 (Qtcreator use case)
+    listCountSignal = pyqtSignal(int)
 
     def __init__(self, eventsManager, tableWidget,indexColumn) :
         super().__init__(eventsManager)
