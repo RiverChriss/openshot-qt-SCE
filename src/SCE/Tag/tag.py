@@ -19,6 +19,7 @@ class Tag() :
         self.object.data["file_id"] = ""
 
         # Update info
+        self.object.data["title"] = text
         self.object.data["layer"] = trackNumber
         self.object.data["position"] = position
         self.object.data["end"] = end
