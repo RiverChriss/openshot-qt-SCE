@@ -5,25 +5,15 @@ import csv
 
 # Important:
 # You need to run the following command to generate the ui_eventswidget.py file
-#     pyside6-uic eventswidget.ui -o ui_eventswidget.py, or
-#     pyside2-uic eventswidget.ui -o ui_eventswidget.py
-try:
-    #Path when import for project Openshot
-    from SCE.EventsWidget.ui_eventswidget import Ui_EventsWidget
-    from SCE.EventsWidget.shortcutManager import ShortcutManager
-    from SCE.EventsWidget.categoryManager import CategoryManager
-    from PyQt5.QtWidgets import *
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-except ImportError:
-    #Path when import for QtCreator (laungh this project)
-    from ui_eventswidget import Ui_EventsWidget
-    from shortcutManager import ShortcutManager
-    from categoryManager import CategoryManager
-    from PySide6.QtWidgets import *
-    from PySide6.QtGui import *
-    from PySide6.QtCore import *
+#     pyside6-uic eventswidget.ui -o ui_eventswidget.py
+# After change in ui_eventswidget.py the include ref PySide6 to PyQt5!!!!!!!!!
 
+from SCE.EventsWidget.ui_eventswidget import Ui_EventsWidget
+from SCE.EventsWidget.shortcutManager import ShortcutManager
+from SCE.EventsWidget.categoryManager import CategoryManager
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
 INDEX_COLUMN_COLOR = 0
 INDEX_COLUMN_SHORTCUT = 1
@@ -138,7 +128,7 @@ class EventsWidget(QWidget):
 
     def removeRow(self, row) -> None :
         previous = self.ui.tableWidget.blockSignals(True)
-        self.shortcutManager.removeShortcutKey(row)
+        self.shortcutManager.remove(row)
         self.ui.tableWidget.removeRow(row)
         self.ui.tableWidget.blockSignals(previous)
 
@@ -231,6 +221,9 @@ class EventsWidget(QWidget):
             print("ERROR : Unable to import the event list")
 
     def exportEventsManager(self, file_path) -> None:
+        # Need to remove shortcut Marker and state shortcut click
+        self.resetMemory()
+
         try :
             data = self.getDataTable()
             with open(file_path, 'w', newline="") as file:
@@ -240,6 +233,11 @@ class EventsWidget(QWidget):
                 file.close()
         except :
             print("ERROR : Unable to export the event list")
+
+    def resetMemory(self):
+        for i in range(self.ui.tableWidget.rowCount()) :
+            self.shortcutManager.resetMemory(i)
+
 
     def getCurrentTime(self) -> float :
         if not self.playerWorker :

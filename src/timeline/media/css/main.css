@@ -238,6 +238,15 @@ img {
   height: 14px;
 }
 
+.dot {
+  position: absolute;
+  bottom: 0;
+  margin-left: -8px;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+}
+
 /* Clips */
 .clip_top {
   display: -webkit-flex;
