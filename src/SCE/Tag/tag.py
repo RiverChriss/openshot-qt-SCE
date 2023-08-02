@@ -33,7 +33,6 @@ class Tag() :
         # Add new dicionary for addition info only for Tag
         self.object.data["tag"] = {}
         self.object.data["tag"]["color"] = colorHex
-        self.object.data["tag"]["text"] = text
 
 
     def save(self):
