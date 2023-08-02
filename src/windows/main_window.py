@@ -863,46 +863,44 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         export_xml()
 
     def actionExportTagsToCSV_trigger(self):
-        header = ["Description", "Color", "Track", "Position", "TrimStart", "TrimEnd", "Duration"]
+        header = ["Description", "Color", "Track", "Position", "Duration"]
         data = []
         clips = Clip.filter()
         for clip in clips :
-            if not clip.data.get("tag") :
-                continue
-
-            trackNumber = clip.data.get("layer")
-            track = Track.get(number=trackNumber)
-            nameTrack = ""
-            if track :
-                nameTrack = track.data.get("label")
-            
-            data.append([clip.data["tag"]["text"], \
-                         clip.data["tag"]["color"],\
-                         nameTrack, \
-                         round(clip.data["position"], 4), \
-                         round(clip.data["start"], 4), \
-                         round(clip.data["end"], 4),
-                         round(clip.data["end"]-clip.data["start"], 4)])
-        
+            if clip.data.get("tag") :
+                nameTrack = self.getTrackName(clip.data.get("layer"))
+                data.append([clip.data["title"], \
+                             clip.data["tag"]["color"], \
+                             nameTrack, \
+                             round(clip.data["position"], 4), \
+                             round(clip.data["end"]-clip.data["start"], 4)])
+            elif self.getTrackName(clip.data.get("layer")) == "Video" :
+                data.append([clip.data["title"], \
+                             "", \
+                             "Video", \
+                             round(clip.data["position"], 4), \
+                             round(clip.data["end"]-clip.data["start"], 4)])
 
         file_path = get_app().project.current_filepath
         if not file_path:
             self.actionSave_trigger()
-        file_path = get_app().project.current_filepath
-        if not file_path:
-            return 
+            file_path = get_app().project.current_filepath
+            if not file_path:
+                return 
         file_path = os.path.join(get_assets_path(file_path, False), "ExportSCE.csv")
         
         print(file_path)
 
         try :
-            with open(file_path, 'w', newline="")as file:
+            with open(file_path, 'w', newline="", encoding="latin-1")as file:
+                #file.write("e\n")
                 csvWriter = csv.writer(file)
                 csvWriter.writerow(header)
                 csvWriter.writerows(data)
                 file.close()
         except :
             log.error("Not able to export Tags in the CSV file")
+            QMessageBox.critical(self, "Error export SCE", "The export did work propely")
 
 
 
@@ -3571,3 +3569,10 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         if Clip.filter(intersect = timeEnd, layer = noTrack) :
             return False
         return True
+    
+    def getTrackName(self, numberTrack) -> str :
+            track = Track.get(number=numberTrack)
+            nameTrack = ""
+            if track :
+                nameTrack = track.data.get("label")
+            return nameTrack
