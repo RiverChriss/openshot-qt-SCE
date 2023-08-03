@@ -36,6 +36,7 @@ from uuid import uuid4
 import json
 import uuid
 import csv
+import shutil
 
 import openshot  # Python module for libopenshot (required video editing module installed separately)
 from PyQt5.QtCore import (
@@ -660,6 +661,9 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
                 _("Save Project..."),
                 recommended_path,
                 _("OpenShot Project (*.osp)"))[0]
+            
+            # Copy Excel
+            self.copyExcelFileToProject(file_path)
 
         if file_path:
             s.setDefaultPath(s.actionType.SAVE, file_path)
@@ -753,8 +757,17 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             if ".osp" not in file_path:
                 file_path = "%s.osp" % file_path
 
+            # Copy Excel
+            self.copyExcelFileToProject(file_path)
+
             # Save new project
             self.save_project(file_path)
+
+    def copyExcelFileToProject(self, pathProjectOpenshot) :
+        pathExcel = os.path.join(info.PATH, "SCE", "Export", "ExportSCE.xlsx")
+        pathProject = os.path.dirname(pathProjectOpenshot)
+        log.info(f"Excel file will be copy from : {pathExcel} to {pathProject}")
+        shutil.copy(pathExcel, pathProject)
 
     def actionImportFiles_trigger(self):
         app = get_app()
@@ -887,13 +900,11 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             file_path = get_app().project.current_filepath
             if not file_path:
                 return 
-        file_path = os.path.join(get_assets_path(file_path, False), "ExportSCE.csv")
-        
-        print(file_path)
+        file_path = os.path.join(get_assets_path(file_path), "ExportSCE.csv")
+        log.info(f"Export for SCE to {file_path}")
 
         try :
             with open(file_path, 'w', newline="", encoding="latin-1")as file:
-                #file.write("e\n")
                 csvWriter = csv.writer(file)
                 csvWriter.writerow(header)
                 csvWriter.writerows(data)
