@@ -167,7 +167,11 @@ class EventsWidget(QWidget):
                 QMessageBox.critical(self, "Invalid category", f"The category : {text} does not exists")
 
     def on_btn_ClearShortcut(self):
-        pass
+        rowIndex = self.ui.tableWidget.currentRow()
+        if rowIndex == -1:
+            return
+        self.shortcutManager.removeShortcutKey(rowIndex)
+        
         
     def on_btn_Insert(self):
         self.insertRow()

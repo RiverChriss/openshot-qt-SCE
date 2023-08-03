@@ -83,6 +83,11 @@ class ShortcutManager(QObject):
             itemShortcut.removeMarker()
             itemShortcut.resetClick()
 
+    def removeShortcutKey(self, row) -> None:
+        itemShortcut = self.tableWidget.item(row, self.columnShortcut)
+        if itemShortcut :
+            itemShortcut.removeShortcutKey()
+
     def updateFunctor(self, row) -> None :
         itemShortcut = self.tableWidget.item(row, self.columnShortcut)
         if itemShortcut :
@@ -127,6 +132,7 @@ class ItemShortcut(QTableWidgetItem):
         self.shortcut.activated.connect(self.functor)
     
     def removeShortcutKey(self) -> None:
+        self.setText("")
         self.shortcut.setKey('')
         try:
             self.shortcut.activated.disconnect()
