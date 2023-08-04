@@ -15,7 +15,6 @@ class MessageTag():
 class MessageCloseTag():
     def __init__(self) -> None:
         self.category = ""
-        self.shortcut = ""
 
 class FunctorCloseTag():
     def __init__(self, shortcutManager) -> None:
@@ -126,7 +125,6 @@ class ItemShortcut(QTableWidgetItem):
         self.shortcutCloseTag.setKey(ShortcutManager.secondKey + shortcut)
 
         self.functorCloseTag.message.category = category
-        self.functorTag.message.shortcut = ShortcutManager.secondKey + shortcut
 
         self.functorTag.message.colorHex = colorHex
         self.functorTag.message.shortcut = shortcut

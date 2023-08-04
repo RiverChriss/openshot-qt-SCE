@@ -3550,24 +3550,19 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         self.actionSave.setEnabled(True)
 
     def on_ShortcutManager_CloseTag(self, message):
-        # Verify message.category is not null
-        if message.category == "" :
-            QMessageBox.critical(self, "Missing data", f"The category associated to the shortcut \"{message.shortcut}\" is missing")
-            return
-
         tagTrackNumber = None
         track = Track.get(label=message.category)
         if not track :
-            log.error("the track doesn't exists")
+            return
         tagTrackNumber = track.data.get("number")
-        time = self.getCurrentTime()
 
-        for tag in self.getIntersectTag(tagTrackNumber, time) :
-            if compareFloat(time, tag.data.get("position")):
+        timelinePlayheadPosition = self.getCurrentTime()
+        for tag in self.getTagsIntersection(tagTrackNumber, timelinePlayheadPosition) :
+            if compareFloat(timelinePlayheadPosition, tag.data.get("position")):
                 tag.delete()
-                log.info("delete tag with 0 size")
-            tag.data["end"] = time - tag.data.get("position")
-            tag.save()
+            else :
+                tag.data["end"] = timelinePlayheadPosition - tag.data.get("position")
+                tag.save()
 
     def on_ShortcutManager_Tag(self, message):
         # Verify message.category is not null
@@ -3575,36 +3570,40 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             QMessageBox.critical(self, "Missing data", f"The category associated to the shortcut \"{message.shortcut}\" is missing")
             return
 
+        # Get the number for the track where the tag will be placed
         tagTrackNumber = None
-        for track in Track.filter() :
-            if track.data.get("label") == message.category :
-                tagTrackNumber = track.data.get("number")
-                break
-        if not tagTrackNumber :
+        track = Track.get(label=message.category)
+        if not track :
             tagTrackNumber = self.actionAddTrack_trigger(name=message.category)
+        else :
+            tagTrackNumber = track.data.get("number")
 
-        timeBegin = self.getCurrentTime()
-        timeEnd = self.getEndTime()
 
-        if timeBegin > timeEnd :
-            log.error("The time begin is bigger than time end")
+        timelinePlayheadPosition = self.getCurrentTime()
+        sourceVideoEndTime = self.getEndTime()
+        if sourceVideoEndTime is None :
+            QMessageBox.critical(self, "Missing video track", "The Video track is missing. Please insert a track named \"Video\"")
             return
-        if compareFloat(timeBegin, timeEnd) :
-            log.error("time begin equal time end")
+        if sourceVideoEndTime <= 0.0 :
+            QMessageBox.critical(self, "Missing source video", "The Video track is empty. Please insert a video before adding tags!")
+            return
+        if timelinePlayheadPosition > sourceVideoEndTime :
+            QMessageBox.critical(self, "Tag outside video bounds", "The tag was inserted after the end off the source video." \
+                                  "\nPlease make sure that the playhead is located before the end of the source video")
             return
 
-        for tag in self.getIntersectTag(tagTrackNumber, timeBegin) :
-            if compareFloat(timeBegin, tag.data.get("position")):
+        # if two tags on the same track would have the same start time, delete the tag on the timeline and insert a new one at that position 
+        for tag in self.getTagsIntersection(tagTrackNumber, timelinePlayheadPosition) :
+            if compareFloat(timelinePlayheadPosition, tag.data.get("position")):
                 tag.delete()
-                log.info("delete tag with 0 size")
-            tag.data["end"] = timeBegin - tag.data.get("position")
-            tag.save()
-
-        Tag(tagTrackNumber, message.colorHex, message.description, timeBegin, timeEnd - timeBegin).save()
-
+            else :
+                tag.data["end"] = timelinePlayheadPosition - tag.data.get("position")
+                tag.save()
+        Tag(tagTrackNumber, message.colorHex, message.description, timelinePlayheadPosition, sourceVideoEndTime - timelinePlayheadPosition).save()
 
 
-    def getIntersectTag(self, noTrack, time) -> list:
+    # if one or more tags on the timeline overlap at the playhead position return the list of all the tags overlapping
+    def getTagsIntersection(self, noTrack, time) -> list:
         data = []
         clips = Clip.filter(intersect = time, layer = noTrack)
         if clips :
@@ -3618,16 +3617,21 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             return self.conversionFrameToTime(self.preview_thread.current_frame)
         return 0.0
     
-    def getEndTime(self) -> float :
-        endTime = 0.0
+    def getEndTime(self):
         trackVideo = Track.get(label="Video")
         if trackVideo:
             clips = Clip.filter(layer=trackVideo.data.get("number"))
+            if not clips :
+                # If the video track is empty return -1.0 to indicate that the source video is needed
+                return -1.0
+            
+            endTime = 0.0
             for clip in clips :
-                if not clip.data.get("tag"):
+                if clip.data.get("reader").get("media_type") == "video" :
                     duration = clip.data.get("end") - clip.data.get("start")
                     endTime = max(endTime, clip.data.get("position") + duration)
-        return endTime
+            return endTime
+        return None
     
     def conversionFrameToTime(self, noFrame) -> float :
         fps = get_app().project.get("fps")
