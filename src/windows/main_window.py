@@ -343,9 +343,6 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         # Update max size (for fast previews)
         self.MaxSizeChanged.emit(self.videoPreview.size())
 
-        # EventManager need a reset memory
-        self.EventsManager.resetMemory()
-
     def actionAnimatedTitle_trigger(self):
         # show dialog
         from windows.animated_title import AnimatedTitle
@@ -3479,7 +3476,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockEventsManager)
 
         # Set Ref need by EventsManager
-        self.EventsManager.setRefFromMainWindow(self, get_app(), self.preview_thread)
+        self.EventsManager.setRefFromMainWindow(self, get_app())
 
         # Add the initial Category in the ComboBox
         listName = []
@@ -3488,15 +3485,35 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
                 listName.append(track.data.get("label"))
         self.EventsManager.addDefaultCategories(listName)
 
-        self.EventsManager.shortcutManager.eventSignal.connect(self.on_ShortcutManager)
+        self.EventsManager.shortcutManager.eventSignal.connect(self.on_ShortcutManager_Tag)
+        self.EventsManager.shortcutManager.closeTagSignal.connect(self.on_ShortcutManager_CloseTag)
 
 
 
     def setActionSaveEnabled(self) -> None :
         self.actionSave.setEnabled(True)
 
+    def on_ShortcutManager_CloseTag(self, message):
+        # Verify message.category is not null
+        if message.category == "" :
+            QMessageBox.critical(self, "Missing data", f"The category associated to the shortcut \"{message.shortcut}\" is missing")
+            return
 
-    def on_ShortcutManager(self, message):
+        tagTrackNumber = None
+        track = Track.get(label=message.category)
+        if not track :
+            log.error("the track doesn't exists")
+        tagTrackNumber = track.data.get("number")
+        time = self.getCurrentTime()
+
+        for tag in self.getIntersectTag(tagTrackNumber, time) :
+            if compareFloat(time, tag.data.get("position")):
+                tag.delete()
+                log.info("delete tag with 0 size")
+            tag.data["end"] = time - tag.data.get("position")
+            tag.save()
+
+    def on_ShortcutManager_Tag(self, message):
         # Verify message.category is not null
         if message.category == "" :
             QMessageBox.critical(self, "Missing data", f"The category associated to the shortcut \"{message.shortcut}\" is missing")
@@ -3509,13 +3526,59 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
                 break
         if not tagTrackNumber :
             tagTrackNumber = self.actionAddTrack_trigger(name=message.category)
-        Tag(tagTrackNumber, message.colorHex, message.description, message.timeBegin, message.timeEnd - message.timeBegin).save()
+
+        timeBegin = self.getCurrentTime()
+        timeEnd = self.getEndTime()
+
+        if timeBegin > timeEnd :
+            log.error("The time begin is bigger than time end")
+            return
+        if compareFloat(timeBegin, timeEnd) :
+            log.error("time begin equal time end")
+            return
+
+        for tag in self.getIntersectTag(tagTrackNumber, timeBegin) :
+            if compareFloat(timeBegin, tag.data.get("position")):
+                tag.delete()
+                log.info("delete tag with 0 size")
+            tag.data["end"] = timeBegin - tag.data.get("position")
+            tag.save()
+
+        Tag(tagTrackNumber, message.colorHex, message.description, timeBegin, timeEnd - timeBegin).save()
 
 
 
-    def verifySpaceForEtiquette(self, noTrack, timeBegin, timeEnd) -> bool :
-        if Clip.filter(intersect = timeBegin, layer = noTrack) :
-            return False
-        if Clip.filter(intersect = timeEnd, layer = noTrack) :
-            return False
-        return True
+    def getIntersectTag(self, noTrack, time) -> list:
+        data = []
+        clips = Clip.filter(intersect = time, layer = noTrack)
+        if clips :
+            for clip in clips :
+                if clip.data.get("tag") :
+                    data.append(clip)
+        return data
+    
+    def getCurrentTime(self) -> float :
+        if self.preview_thread.current_frame :
+            return self.conversionFrameToTime(self.preview_thread.current_frame)
+        return 0.0
+    
+    def getEndTime(self) -> float :
+        endTime = 0.0
+        trackVideo = Track.get(label="Video")
+        if trackVideo:
+            clips = Clip.filter(layer=trackVideo.data.get("number"))
+            for clip in clips :
+                if not clip.data.get("tag"):
+                    duration = clip.data.get("end") - clip.data.get("start")
+                    endTime = max(endTime, clip.data.get("position") + duration)
+        return endTime
+    
+    def conversionFrameToTime(self, noFrame) -> float :
+        fps = get_app().project.get("fps")
+        fps_float = float(fps["num"]) / float(fps["den"])
+        requested_time = float(noFrame - 1) / fps_float
+        return requested_time
+    
+
+def compareFloat(value1, value2, epsilon = 0.0001) -> bool :
+    return abs(value2 - value1) <= epsilon

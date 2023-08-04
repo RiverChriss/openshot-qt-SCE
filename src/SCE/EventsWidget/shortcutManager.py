@@ -5,61 +5,47 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
 
-from classes.query import Marker
-
-class Message():
+class MessageTag():
     def __init__(self) -> None:
         self.colorHex = ""
         self.shortcut = ""
         self.category = ""
         self.description = ""
-        self.timeBegin = 0.0
-        self.timeEnd = 0.0
+
+class MessageCloseTag():
+    def __init__(self) -> None:
+        self.category = ""
+        self.shortcut = ""
+
+class FunctorCloseTag():
+    def __init__(self, shortcutManager) -> None:
+        # Variable logic
+        self.shortcutManager = shortcutManager
+
+        # Data Store
+        self.message = MessageCloseTag()
+
+    def __call__(self) -> None:
+        self.shortcutManager.closeTagSignal.emit(self.message)
 
 
 class FunctorShortcut():
     def __init__(self, shortcutManager) -> None:
         # Variable logic
         self.shortcutManager = shortcutManager
-        self.compteurClick = 0
 
         # Data Store
-        self.message = Message()
-        self.initMarker()
+        self.message = MessageTag()
 
     def __call__(self) -> None:
-        if (self.compteurClick % 2) == 0 :
-            # Fist click
-            self.message.timeBegin = self.shortcutManager.getCurrentTime()
-            self.compteurClick += 1
-            self.setMarker(self.message.colorHex, self.message.timeBegin)
-            self.marker.save()
-            print(f"Shortcut \"{self.message.shortcut}\" click time : {self.message.timeBegin}")
-            return
-        
-        # Second click
-        self.marker.delete()
-        self.initMarker()
-
-        self.message.timeEnd = self.shortcutManager.getCurrentTime()
-        self.compteurClick = 0
-
-        if self.message.timeBegin > self.message.timeEnd :
-            self.message.timeBegin, self.message.timeEnd = self.message.timeEnd, self.message.timeBegin
-
         self.shortcutManager.eventSignal.emit(self.message)
         
-    def initMarker(self) :
-        self.marker = Marker()
-        self.marker.data = {"icon": "blue.png","vector": "blue"} # Default Marker Openshot
-    
-    def setMarker(self, color, position = 0) :
-        self.marker.data["position"] = position
-        self.marker.data["shortcut"] = {"color": color}
 
         
 class ShortcutManager(QObject):
-    eventSignal = pyqtSignal(Message)
+    eventSignal = pyqtSignal(MessageTag)
+    closeTagSignal = pyqtSignal(MessageCloseTag)
+    secondKey = "SHIFT+"
 
     def __init__(self, eventsManager, tableWidget, columnShortcut):
         super().__init__(eventsManager)
@@ -74,14 +60,6 @@ class ShortcutManager(QObject):
         itemShortcut = self.tableWidget.item(row, self.columnShortcut)
         if itemShortcut :
             itemShortcut.removeShortcutKey()
-            itemShortcut.removeMarker()
-            itemShortcut.resetClick()
-
-    def resetMemory(self, row) -> None :
-        itemShortcut = self.tableWidget.item(row, self.columnShortcut)
-        if itemShortcut :
-            itemShortcut.removeMarker()
-            itemShortcut.resetClick()
 
     def removeShortcutKey(self, row) -> None:
         itemShortcut = self.tableWidget.item(row, self.columnShortcut)
@@ -93,9 +71,6 @@ class ShortcutManager(QObject):
         if itemShortcut :
             [color, shortcut, category, description] = self.eventsManager.getDataRow(row)
             itemShortcut.update(color, shortcut, category, description)
-
-    def getCurrentTime(self) -> float:
-        return self.eventsManager.getCurrentTime()
 
     def verifyShortcutAlreadyUse(self, name, skipRow = -1) -> bool:
         if name == "" :
@@ -110,12 +85,7 @@ class ShortcutManager(QObject):
     def verifyShortcutForm(self, name) -> bool :
         if name == "" :
             return True
-        if re.fullmatch(r"(CTRL\+)?(SHIFT\+)?(ALT\+)?([A-Z]|[0-9])", name) == None and \
-            re.fullmatch(r"(CTRL\+)?(ALT\+)?(SHIFT\+)?([A-Z]|[0-9])", name) == None and \
-            re.fullmatch(r"(SHIFT\+)?(CTRL\+)?(ALT\+)?([A-Z]|[0-9])", name) == None and \
-            re.fullmatch(r"(SHIFT\+)?(ALT\+)?(CTRL\+)?([A-Z]|[0-9])", name) == None and \
-            re.fullmatch(r"(ALT\+)?(CTRL\+)?(SHIFT\+)?([A-Z]|[0-9])", name) == None and \
-            re.fullmatch(r"(ALT\+)?(SHIFT\+)?(CTRL\+)?([A-Z]|[0-9])", name) == None :
+        if re.fullmatch(r"([A-Z]|[0-9])", name) == None :
             return False
         return True
 
@@ -127,33 +97,42 @@ class ItemShortcut(QTableWidgetItem):
         # Format
         self.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.shortcut = QShortcut(self.shortcutManager.eventsManager)
-        self.functor = FunctorShortcut(shortcutManager)
-        self.shortcut.activated.connect(self.functor)
+        self.shortcutTag = QShortcut(self.shortcutManager.eventsManager)
+        self.shortcutCloseTag = QShortcut(self.shortcutManager.eventsManager)
+
+        self.functorTag = FunctorShortcut(shortcutManager)
+        self.functorCloseTag = FunctorCloseTag(shortcutManager)
+
+        self.shortcutTag.activated.connect(self.functorTag)
+        self.shortcutCloseTag.activated.connect(self.functorCloseTag)
+
     
     def removeShortcutKey(self) -> None:
         self.setText("")
-        self.shortcut.setKey('')
+        self.shortcutTag.setKey('')
         try:
-            self.shortcut.activated.disconnect()
+            self.shortcutTag.activated.disconnect()
         except:
             print(end="")
 
-    def removeMarker(self) -> None:
-        self.functor.marker.delete()
-        self.functor.initMarker()
-
-    def resetClick(self) -> None:
-        self.functor.compteurClick = 0
+        self.shortcutCloseTag.setKey('')
+        try:
+            self.shortcutCloseTag.activated.disconnect()
+        except:
+            print(end="")
 
     def update(self, colorHex, shortcut, category, description) -> None:
-        self.shortcut.setKey(shortcut)
-        
-        self.functor.message.colorHex = colorHex
-        self.functor.message.shortcut = shortcut
-        self.functor.message.category = category
-        self.functor.message.description = description
+        self.shortcutTag.setKey(shortcut)
+        self.shortcutCloseTag.setKey(ShortcutManager.secondKey + shortcut)
 
+        self.functorCloseTag.message.category = category
+        self.functorTag.message.shortcut = ShortcutManager.secondKey + shortcut
+
+        self.functorTag.message.colorHex = colorHex
+        self.functorTag.message.shortcut = shortcut
+        self.functorTag.message.category = category
+        self.functorTag.message.description = description
+   
     def verifyShortcutAlreadyUse(self) -> bool:
         return self.shortcutManager.verifyShortcutAlreadyUse(self.text(), self.row())
     
