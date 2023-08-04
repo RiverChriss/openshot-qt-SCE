@@ -362,7 +362,19 @@ class VideoWidget(QWidget, updates.UpdateInterface):
             clip_frame_number = round(playhead_position - position_of_clip) + start_of_clip + 1
 
             # Get properties of clip at current frame
-            raw_properties = json.loads(self.transforming_clip_object.PropertiesJSON(clip_frame_number))
+            if self.transforming_clip_object :
+                raw_properties = json.loads(self.transforming_clip_object.PropertiesJSON(clip_frame_number))
+            else :
+                raw_properties = {"parentObjectId": {"memo": ''},
+                                  "scale_x": {"value": 0},
+                                  "scale_y": {"value": 0},
+                                  "location_x": {"value": 0},
+                                  "location_y": {"value": 0},
+                                  "rotation": {"value": 0},
+                                  "origin_x": {"value": 0},
+                                  "origin_y": {"value": 0},
+                                  "shear_x": {"value": 0},
+                                  "shear_y": {"value": 0},}
 
             # Get size of current video player
             player_width = viewport_rect.width()
