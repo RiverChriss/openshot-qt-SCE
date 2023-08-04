@@ -35,6 +35,8 @@ from time import sleep
 from uuid import uuid4
 import json
 import uuid
+import csv
+import shutil
 
 import openshot  # Python module for libopenshot (required video editing module installed separately)
 from PyQt5.QtCore import (
@@ -752,6 +754,16 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             # Save new project
             self.save_project(file_path)
 
+    def copyExcelFileToProject(self, pathProjectOpenshot) :
+        nameExcel = "ExportSCE.xlsx"
+        pathExcel = os.path.join(info.PATH, "SCE", "Export", nameExcel)
+        pathProject = os.path.dirname(pathProjectOpenshot)
+        if os.path.isfile(os.path.join(pathProject, nameExcel)) :
+            log.info(f"The Excel exists in the path : {pathProject}")
+            return
+        log.info(f"Excel file will be copy from : {pathExcel} to {pathProject}")
+        shutil.copy(pathExcel, pathProject)
+
     def actionImportFiles_trigger(self):
         app = get_app()
         s = app.get_settings()
@@ -857,6 +869,50 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
     def actionExportFCPXML_trigger(self, checked=True):
         """Export XML (Final Cut Pro) File"""
         export_xml()
+
+    def actionExportTagsToCSV_trigger(self):
+        header = ["Description", "Color", "Track", "Position", "Duration"]
+        data = []
+        clips = Clip.filter()
+        for clip in clips :
+            if clip.data.get("tag") :
+                nameTrack = self.getTrackName(clip.data.get("layer"))
+                data.append([clip.data["title"], \
+                             clip.data["tag"]["color"], \
+                             nameTrack, \
+                             round(clip.data["position"], 4), \
+                             round(clip.data["end"]-clip.data["start"], 4)])
+            elif self.getTrackName(clip.data.get("layer")) == "Video" :
+                data.append([clip.data["title"], \
+                             "", \
+                             "Video", \
+                             round(clip.data["position"], 4), \
+                             round(clip.data["end"]-clip.data["start"], 4)])
+
+        file_path = get_app().project.current_filepath
+        if not file_path:
+            self.actionSave_trigger()
+            file_path = get_app().project.current_filepath
+            if not file_path:
+                return 
+        filePathCSV = os.path.join(get_assets_path(file_path), "ExportSCE.csv")
+        log.info(f"Export for SCE to {file_path}")
+
+        try :
+            with open(filePathCSV, 'w', newline="", encoding="latin-1")as file:
+                csvWriter = csv.writer(file)
+                csvWriter.writerow(header)
+                csvWriter.writerows(data)
+                file.close()
+        except :
+            log.error("Not able to export Tags in the CSV file")
+            QMessageBox.critical(self, "Error export SCE", "The export did work propely")
+            return
+        
+         # Copy Excel
+        self.copyExcelFileToProject(file_path)
+
+
 
     def actionImportEDL_trigger(self, checked=True):
         """Import EDL File"""
@@ -3579,6 +3635,13 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         requested_time = float(noFrame - 1) / fps_float
         return requested_time
     
+    def getTrackName(self, numberTrack) -> str :
+            track = Track.get(number=numberTrack)
+            nameTrack = ""
+            if track :
+                nameTrack = track.data.get("label")
+            return nameTrack
 
 def compareFloat(value1, value2, epsilon = 0.0001) -> bool :
     return abs(value2 - value1) <= epsilon
+
