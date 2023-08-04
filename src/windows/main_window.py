@@ -754,10 +754,10 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             # Save new project
             self.save_project(file_path)
 
-    def copyExcelFileToProject(self, pathProjectOpenshot) :
+    def copyExcelFileToProject(self, pathFileCSV) :
         nameExcel = "ExportSCE.xlsx"
         pathExcel = os.path.join(info.PATH, "SCE", "Export", nameExcel)
-        pathProject = os.path.dirname(pathProjectOpenshot)
+        pathProject = os.path.dirname(pathFileCSV)
         if os.path.isfile(os.path.join(pathProject, nameExcel)) :
             log.info(f"The Excel exists in the path : {pathProject}")
             return
@@ -882,7 +882,8 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
                              nameTrack, \
                              round(clip.data["position"], 4), \
                              round(clip.data["end"]-clip.data["start"], 4)])
-            elif self.getTrackName(clip.data.get("layer")) == "Video" :
+            elif (self.getTrackName(clip.data.get("layer")) == "Video") and \
+                 (clip.data.get("reader").get("media_type") == "video"):
                 data.append([clip.data["title"], \
                              "", \
                              "Video", \
@@ -894,9 +895,9 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             self.actionSave_trigger()
             file_path = get_app().project.current_filepath
             if not file_path:
+                QMessageBox.critical(self, "Saved project required", "Please save the project to allow the export process to continue")
                 return 
         filePathCSV = os.path.join(get_assets_path(file_path), "ExportSCE.csv")
-        log.info(f"Export for SCE to {file_path}")
 
         try :
             with open(filePathCSV, 'w', newline="", encoding="latin-1")as file:
@@ -905,12 +906,11 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
                 csvWriter.writerows(data)
                 file.close()
         except :
-            log.error("Not able to export Tags in the CSV file")
-            QMessageBox.critical(self, "Error export SCE", "The export did work propely")
+            QMessageBox.critical(self, "Export error!", "There was an issue with the export process. Please make sure the ExportSCE.csv is not already opened")
             return
         
          # Copy Excel
-        self.copyExcelFileToProject(file_path)
+        self.copyExcelFileToProject(filePathCSV)
 
 
 
