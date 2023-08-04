@@ -77,6 +77,9 @@ class TimelineSync(UpdateInterface):
         if len(action.key) >= 1 and action.key[0].lower() in ["files", "history", "markers",
                                                               "layers", "scale", "profile"]:
             return
+        
+        if isinstance(action.values, dict) and action.values.get("tag"):
+            return
 
         # Disable video caching temporarily
         caching_value = openshot.Settings.Instance().ENABLE_PLAYBACK_CACHING

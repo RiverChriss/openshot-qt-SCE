@@ -49,6 +49,9 @@ class PreviewParent(QObject, UpdateInterface):
                                                               "scale", "profile", "sample_rate"]:
             return
 
+        if isinstance(action.values, dict) and action.values.get("tag"):
+            return
+
         try:
             # Keep track of max timeline frame # on any updates to the timeline
             self.timeline_max_length = self.timeline.GetMaxFrame()
