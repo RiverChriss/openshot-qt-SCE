@@ -35,6 +35,8 @@ from time import sleep
 from uuid import uuid4
 import json
 import uuid
+import csv
+import shutil
 
 import openshot  # Python module for libopenshot (required video editing module installed separately)
 from PyQt5.QtCore import (
@@ -342,9 +344,6 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
 
         # Update max size (for fast previews)
         self.MaxSizeChanged.emit(self.videoPreview.size())
-
-        # EventManager need a reset memory
-        self.EventsManager.resetMemory()
 
     def actionAnimatedTitle_trigger(self):
         # show dialog
@@ -755,6 +754,16 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             # Save new project
             self.save_project(file_path)
 
+    def copyExcelFileToProject(self, pathFileCSV) :
+        nameExcel = "ExportSCE.xlsx"
+        pathExcel = os.path.join(info.PATH, "SCE", "Export", nameExcel)
+        pathProject = os.path.dirname(pathFileCSV)
+        if os.path.isfile(os.path.join(pathProject, nameExcel)) :
+            log.info(f"The Excel exists in the path : {pathProject}")
+            return
+        log.info(f"Excel file will be copy from : {pathExcel} to {pathProject}")
+        shutil.copy(pathExcel, pathProject)
+
     def actionImportFiles_trigger(self):
         app = get_app()
         s = app.get_settings()
@@ -860,6 +869,50 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
     def actionExportFCPXML_trigger(self, checked=True):
         """Export XML (Final Cut Pro) File"""
         export_xml()
+
+    def actionExportTagsToCSV_trigger(self):
+        header = ["Description", "Color", "Track", "Position", "Duration"]
+        data = []
+        clips = Clip.filter()
+        for clip in clips :
+            if clip.data.get("tag") :
+                nameTrack = self.getTrackName(clip.data.get("layer"))
+                data.append([clip.data["title"], \
+                             clip.data["tag"]["color"], \
+                             nameTrack, \
+                             round(clip.data["position"], 4), \
+                             round(clip.data["end"]-clip.data["start"], 4)])
+            elif (self.getTrackName(clip.data.get("layer")) == "Video") and \
+                 (clip.data.get("reader").get("media_type") == "video"):
+                data.append([clip.data["title"], \
+                             "", \
+                             "Video", \
+                             round(clip.data["position"], 4), \
+                             round(clip.data["end"]-clip.data["start"], 4)])
+
+        file_path = get_app().project.current_filepath
+        if not file_path:
+            self.actionSave_trigger()
+            file_path = get_app().project.current_filepath
+            if not file_path:
+                QMessageBox.critical(self, "Saved project required", "Please save the project to allow the export process to continue")
+                return 
+        filePathCSV = os.path.join(get_assets_path(file_path), "ExportSCE.csv")
+
+        try :
+            with open(filePathCSV, 'w', newline="", encoding="latin-1")as file:
+                csvWriter = csv.writer(file)
+                csvWriter.writerow(header)
+                csvWriter.writerows(data)
+                file.close()
+        except :
+            QMessageBox.critical(self, "Export error!", "There was an issue with the export process. Please make sure the ExportSCE.csv is not already opened")
+            return
+        
+         # Copy Excel
+        self.copyExcelFileToProject(filePathCSV)
+
+
 
     def actionImportEDL_trigger(self, checked=True):
         """Import EDL File"""
@@ -3479,7 +3532,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockEventsManager)
 
         # Set Ref need by EventsManager
-        self.EventsManager.setRefFromMainWindow(self, get_app(), self.preview_thread)
+        self.EventsManager.setRefFromMainWindow(self, get_app())
 
         # Add the initial Category in the ComboBox
         listName = []
@@ -3488,34 +3541,111 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
                 listName.append(track.data.get("label"))
         self.EventsManager.addDefaultCategories(listName)
 
-        self.EventsManager.shortcutManager.eventSignal.connect(self.on_ShortcutManager)
+        self.EventsManager.shortcutManager.eventSignal.connect(self.on_ShortcutManager_Tag)
+        self.EventsManager.shortcutManager.closeTagSignal.connect(self.on_ShortcutManager_CloseTag)
 
 
 
     def setActionSaveEnabled(self) -> None :
         self.actionSave.setEnabled(True)
 
+    def on_ShortcutManager_CloseTag(self, message):
+        tagTrackNumber = None
+        track = Track.get(label=message.category)
+        if not track :
+            return
+        tagTrackNumber = track.data.get("number")
 
-    def on_ShortcutManager(self, message):
+        timelinePlayheadPosition = self.getCurrentTime()
+        for tag in self.getTagsIntersection(tagTrackNumber, timelinePlayheadPosition) :
+            if compareFloat(timelinePlayheadPosition, tag.data.get("position")):
+                tag.delete()
+            else :
+                tag.data["end"] = timelinePlayheadPosition - tag.data.get("position")
+                tag.save()
+
+    def on_ShortcutManager_Tag(self, message):
         # Verify message.category is not null
         if message.category == "" :
             QMessageBox.critical(self, "Missing data", f"The category associated to the shortcut \"{message.shortcut}\" is missing")
             return
 
+        # Get the number for the track where the tag will be placed
         tagTrackNumber = None
-        for track in Track.filter() :
-            if track.data.get("label") == message.category :
-                tagTrackNumber = track.data.get("number")
-                break
-        if not tagTrackNumber :
+        track = Track.get(label=message.category)
+        if not track :
             tagTrackNumber = self.actionAddTrack_trigger(name=message.category)
-        Tag(tagTrackNumber, message.colorHex, message.description, message.timeBegin, message.timeEnd - message.timeBegin).save()
+        else :
+            tagTrackNumber = track.data.get("number")
 
 
+        timelinePlayheadPosition = self.getCurrentTime()
+        sourceVideoEndTime = self.getEndTime()
+        if sourceVideoEndTime is None :
+            QMessageBox.critical(self, "Missing video track", "The Video track is missing. Please insert a track named \"Video\"")
+            return
+        if sourceVideoEndTime <= 0.0 :
+            QMessageBox.critical(self, "Missing source video", "The Video track is empty. Please insert a video before adding tags!")
+            return
+        if timelinePlayheadPosition > sourceVideoEndTime :
+            QMessageBox.critical(self, "Tag outside video bounds", "The tag was inserted after the end off the source video." \
+                                  "\nPlease make sure that the playhead is located before the end of the source video")
+            return
 
-    def verifySpaceForEtiquette(self, noTrack, timeBegin, timeEnd) -> bool :
-        if Clip.filter(intersect = timeBegin, layer = noTrack) :
-            return False
-        if Clip.filter(intersect = timeEnd, layer = noTrack) :
-            return False
-        return True
+        # if two tags on the same track would have the same start time, delete the tag on the timeline and insert a new one at that position 
+        for tag in self.getTagsIntersection(tagTrackNumber, timelinePlayheadPosition) :
+            if compareFloat(timelinePlayheadPosition, tag.data.get("position")):
+                tag.delete()
+            else :
+                tag.data["end"] = timelinePlayheadPosition - tag.data.get("position")
+                tag.save()
+        Tag(tagTrackNumber, message.colorHex, message.description, timelinePlayheadPosition, sourceVideoEndTime - timelinePlayheadPosition).save()
+
+
+    # if one or more tags on the timeline overlap at the playhead position return the list of all the tags overlapping
+    def getTagsIntersection(self, noTrack, time) -> list:
+        data = []
+        clips = Clip.filter(intersect = time, layer = noTrack)
+        if clips :
+            for clip in clips :
+                if clip.data.get("tag") :
+                    data.append(clip)
+        return data
+    
+    def getCurrentTime(self) -> float :
+        if self.preview_thread.current_frame :
+            return self.conversionFrameToTime(self.preview_thread.current_frame)
+        return 0.0
+    
+    def getEndTime(self):
+        trackVideo = Track.get(label="Video")
+        if trackVideo:
+            clips = Clip.filter(layer=trackVideo.data.get("number"))
+            if not clips :
+                # If the video track is empty return -1.0 to indicate that the source video is needed
+                return -1.0
+            
+            endTime = 0.0
+            for clip in clips :
+                if clip.data.get("reader").get("media_type") == "video" :
+                    duration = clip.data.get("end") - clip.data.get("start")
+                    endTime = max(endTime, clip.data.get("position") + duration)
+            return endTime
+        return None
+    
+    def conversionFrameToTime(self, noFrame) -> float :
+        fps = get_app().project.get("fps")
+        fps_float = float(fps["num"]) / float(fps["den"])
+        requested_time = float(noFrame - 1) / fps_float
+        return requested_time
+    
+    def getTrackName(self, numberTrack) -> str :
+            track = Track.get(number=numberTrack)
+            nameTrack = ""
+            if track :
+                nameTrack = track.data.get("label")
+            return nameTrack
+
+def compareFloat(value1, value2, epsilon = 0.0001) -> bool :
+    return abs(value2 - value1) <= epsilon
+

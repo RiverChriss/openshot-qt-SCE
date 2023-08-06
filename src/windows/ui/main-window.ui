@@ -107,6 +107,8 @@
      <addaction name="separator"/>
      <addaction name="actionExportEDL"/>
      <addaction name="actionExportFCPXML"/>
+     <addaction name="separator"/>
+     <addaction name="actionExportTagsToCSV"/>
     </widget>
     <widget class="QMenu" name="menuImport_Project">
      <property name="title">
@@ -1756,6 +1758,15 @@
    </property>
    <property name="toolTip">
     <string>Clear Waveform Display Data</string>
+   </property>
+  </action>
+  <action name="actionExportTagsToCSV">
+   <property name="icon">
+    <iconset resource="../../../images/openshot.qrc">
+     <normaloff>:/icons/Humanity/actions/16/view-list-details.png</normaloff>:/icons/Humanity/actions/16/view-list-details.png</iconset>
+   </property>
+   <property name="text">
+    <string>Export SCE (Excel)</string>
    </property>
   </action>
  </widget>

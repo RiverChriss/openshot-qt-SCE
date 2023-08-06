@@ -68,7 +68,6 @@ class EventsWidget(QWidget):
         super().__init__(parent)
         self.ui = Ui_EventsWidget()
         self.ui.setupUi(self)
-        self.playerWorker = None # Need the ref to object with current Frame
         self.mainApplication = None # Need to get default application settings
         self.mainWindow = None # Need to be able call function in main_window
         self.shortcutManager = ShortcutManager(self, self.ui.tableWidget, INDEX_COLUMN_SHORTCUT)
@@ -96,10 +95,9 @@ class EventsWidget(QWidget):
         self.categoryManager.listCountSignal.connect(lambda nbCategoryNotDefault : self.ui.btn_RemoveCategory.setEnabled(nbCategoryNotDefault))
 
 
-    def setRefFromMainWindow(self, mainWindow, mainApplication, playerWorker) -> None :
+    def setRefFromMainWindow(self, mainWindow, mainApplication) -> None :
         self.mainWindow = mainWindow
         self.mainApplication = mainApplication
-        self.playerWorker = playerWorker
 
     def insertRow(self, colorHex=ColorWidget.DEFAULT_COLOR, shortcut="", category="", description="") -> None:
         row = 0
@@ -144,6 +142,9 @@ class EventsWidget(QWidget):
                     QMessageBox.critical(self, "Shortcut Error", f"This shortcut \"{item.text()}\" is already use in the table")
                     item.setText("")
                 elif item.text() in self.getAllKeyboardShortcutsValue() :
+                    QMessageBox.critical(self, "Shortcut Error", f"This shortcut \"{item.text()}\" is already use in Openshot")
+                    item.setText("")
+                elif (ShortcutManager.secondKey + item.text()) in self.getAllKeyboardShortcutsValue() :
                     QMessageBox.critical(self, "Shortcut Error", f"This shortcut \"{item.text()}\" is already use in Openshot")
                     item.setText("")
         
@@ -210,7 +211,8 @@ class EventsWidget(QWidget):
                     if shortcut != "" :
                         if not self.shortcutManager.verifyShortcutForm(shortcut) or \
                           self.shortcutManager.verifyShortcutAlreadyUse(shortcut) or \
-                          shortcut in self.getAllKeyboardShortcutsValue() :
+                          shortcut in self.getAllKeyboardShortcutsValue()  or \
+                          (ShortcutManager.secondKey + shortcut) in self.getAllKeyboardShortcutsValue() :
                             shortcut = ""
                             needToDialogWarning = True
                     self.insertRow(colorHex, shortcut, category, description)
@@ -225,9 +227,6 @@ class EventsWidget(QWidget):
             print("ERROR : Unable to import the event list")
 
     def exportEventsManager(self, file_path) -> None:
-        # Need to remove shortcut Marker and state shortcut click
-        self.resetMemory()
-
         try :
             data = self.getDataTable()
             with open(file_path, 'w', newline="") as file:
@@ -237,19 +236,6 @@ class EventsWidget(QWidget):
                 file.close()
         except :
             print("ERROR : Unable to export the event list")
-
-    def resetMemory(self):
-        for i in range(self.ui.tableWidget.rowCount()) :
-            self.shortcutManager.resetMemory(i)
-
-
-    def getCurrentTime(self) -> float :
-        if not self.playerWorker :
-            return 0
-        fps = QApplication.instance().project.get("fps")
-        fps_float = float(fps["num"]) / float(fps["den"])
-        requested_time = float(self.playerWorker.current_frame - 1) / fps_float
-        return requested_time
 
     def getDataRow(self, row):
         color = self.ui.tableWidget.cellWidget(row, INDEX_COLUMN_COLOR).getColor()

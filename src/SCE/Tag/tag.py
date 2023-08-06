@@ -22,6 +22,7 @@ class Tag() :
         self.object.data["title"] = text
         self.object.data["layer"] = trackNumber
         self.object.data["position"] = position
+        self.object.data["start"] = 0.0
         self.object.data["end"] = end
 
         # Make the Clip invisible
@@ -32,7 +33,6 @@ class Tag() :
         # Add new dicionary for addition info only for Tag
         self.object.data["tag"] = {}
         self.object.data["tag"]["color"] = colorHex
-        self.object.data["tag"]["text"] = text
 
 
     def save(self):
