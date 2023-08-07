@@ -186,7 +186,7 @@ class EventsWidget(QWidget):
 
     def importEventsManager(self, file_path) -> None:
         try :
-            file = open(file_path)
+            file = open(file_path, encoding="latin-1")
             csvReader = csv.reader(file)
             header = []
             data = []
@@ -229,7 +229,7 @@ class EventsWidget(QWidget):
     def exportEventsManager(self, file_path) -> None:
         try :
             data = self.getDataTable()
-            with open(file_path, 'w', newline="") as file:
+            with open(file_path, 'w', newline="", encoding="latin-1") as file:
                 csvWriter = csv.writer(file)
                 csvWriter.writerow(HEADER_REF)
                 csvWriter.writerows(data)

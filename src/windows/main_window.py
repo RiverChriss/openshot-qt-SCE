@@ -755,7 +755,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
             self.save_project(file_path)
 
     def copyExcelFileToProject(self, pathFileCSV) :
-        nameExcel = "ExportSCE.xlsx"
+        nameExcel = "ExportSCE.xlsm"
         pathExcel = os.path.join(info.PATH, "SCE", "Export", nameExcel)
         pathProject = os.path.dirname(pathFileCSV)
         if os.path.isfile(os.path.join(pathProject, nameExcel)) :
@@ -900,7 +900,7 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         filePathCSV = os.path.join(get_assets_path(file_path), "ExportSCE.csv")
 
         try :
-            with open(filePathCSV, 'w', newline="", encoding="latin-1")as file:
+            with open(filePathCSV, 'w', newline="", encoding="latin-1") as file:
                 csvWriter = csv.writer(file)
                 csvWriter.writerow(header)
                 csvWriter.writerows(data)
