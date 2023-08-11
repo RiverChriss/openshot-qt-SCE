@@ -1,83 +1,14 @@
-OpenShot Video Editor is an award-winning free and open-source video editor 
-for Linux, Mac, and Windows, and is dedicated to delivering high quality 
-video editing and animation solutions to the world.
+## SCE Features
 
-## Build Status
-
-[![openshot-qt CI Build](https://github.com/OpenShot/openshot-qt/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenShot/openshot-qt/actions/workflows/ci.yml) [![libopenshot CI Build](https://github.com/OpenShot/libopenshot/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenShot/libopenshot/actions/workflows/ci.yml) [![libopenshot-audio CI Build](https://github.com/OpenShot/libopenshot-audio/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenShot/libopenshot-audio/actions/workflows/ci.yml)
-
-## Features
-
-* Cross-platform (Linux, Mac, and Windows)
-* Support for many video, audio, and image formats (based on FFmpeg)
-* Powerful curve-based Key frame animations
-* Desktop integration (drag and drop support)
-* Unlimited tracks / layers
-* Clip resizing, scaling, trimming, snapping, rotation, and cutting
-* Video transitions with real-time previews
-* Compositing, image overlays, watermarks
-* Title templates, title creation, sub-titles
-* 2D animation support (image sequences)
-* 3D animated titles (and effects)
-* SVG friendly, to create and include vector titles and credits
-* Scrolling motion picture credits
-* Advanced Timeline (including Drag & drop, scrolling, panning, zooming, and snapping)
-* Frame accuracy (step through each frame of video)
-* Time-mapping and speed changes on clips (slow/fast, forward/backward, etc...)
-* Audio mixing and editing
-* Digital video effects, including brightness, gamma, hue, greyscale, chroma key, and many more!
-* Experimental hardware encoding and decoding (VA-API, NVDEC, D3D9, D3D11, VTB)
-* Import & Export widely supported formats (EDL, XML)
-* Render videos in many codecs and formats (based on FFmpeg)
-
-## Getting Started
-
-The quickest way to get started using OpenShot is to download one of 
-our pre-built installers. On our download page, click the **Daily Builds** 
-button to view the latest, experimental builds, which are created for each 
-new commit to this repo.
-
-https://www.openshot.org/download/
+* Added a module to manage events
+* Create tags directly on the timeline
+* Export the result of the analysis to an Excel file
+* Events and Tags are saved directly into the Openshot project
 
 ## Tutorial
 
 Watch the official [step-by-step video tutorial](https://www.youtube.com/watch?list=PLymupH2aoNQNezYzv2lhSwvoyZgLp1Q0T&v=1k-ISfd-YBE), or read the official [user-guide](https://www.openshot.org/user-guide/):
 
-## Developers
-
-Are you interested in becoming more involved in the development of 
-OpenShot? Build exciting new features, fix bugs, make friends, and become a hero! 
-Please read the [step-by-step](https://github.com/OpenShot/openshot-qt/wiki/Become-a-Developer) 
-instructions for getting source code, configuring dependencies, and building OpenShot.
-
-## Documentation
-
-Beautiful HTML documentation can be generated using Sphinx.
-
-```sh
-cd doc
-make html
-```
-
-The documentation for the most recent release can be viewed online at [openshot.org/user-guide](https://www.openshot.org/user-guide/).
-
-## Report a bug
-
-Please report bugs using the official [Report a Bug](https://www.openshot.org/issues/new/) 
-feature on our website. This walks you through the bug reporting process, and helps 
-to create a high-quality bug report for the OpenShot community.
-
-Or you can report a new issue directly on GitHub:
-
-https://github.com/OpenShot/openshot-qt/issues
-
-## Translations
-
-Translating OpenShot into other languages is very easy! Please read the [step-by-step](https://github.com/OpenShot/openshot-qt/wiki/Become-a-Translator) instructions or login to LaunchPad and get started.
-All you need is a web browser.
-
-* Application Translations: https://translations.launchpad.net/openshot/2.0/+translations
-* Website Translations: https://translations.launchpad.net/openshot/website/+pots/django
 
 ## Dependencies
 
@@ -94,6 +25,119 @@ dependencies in order to run OpenShot successfully:
 *  libopenshot-audio: OpenShot Audio Library (https://github.com/OpenShot/libopenshot-audio)
 *  FFmpeg or Libav (http://www.ffmpeg.org/ or http://libav.org/)
 *  GCC build tools (or MinGW on Windows)
+
+## Installation for Developpers
+
+```sh
+#Reference : https://github.com/OpenShot/libopenshot/wiki/Linux-Build-Instructions
+
+###############################
+#Getting the Latest Source Code
+###############################
+sudo apt-get update
+sudo apt-get install build-essential
+sudo apt-get install git
+
+git clone https://github.com/OpenShot/libopenshot-audio.git
+git clone https://github.com/OpenShot/libopenshot.git
+git clone https://github.com/RiverChriss/openshot-qt-SCE
+
+sudo apt-get install python3-pip
+pip install PyQtWebEngine
+python3 -m pip install cx_freeze --upgrade
+
+
+#Configuring your Development Environment
+sudo add-apt-repository ppa:openshot.developers/libopenshot-daily
+sudo apt-get update
+sudo apt-get install openshot-qt
+sudo apt-get install cmake
+sudo apt-get install libx11-dev
+sudo apt-get install libasound2-dev
+sudo apt-get install libavcodec-dev
+sudo apt-get install libavdevice-dev
+sudo apt-get install libavfilter-dev
+sudo apt-get install libavformat-dev
+sudo apt-get install libavresample-dev
+sudo apt-get install libavutil-dev
+sudo apt-get install libfdk-aac-dev
+sudo apt-get install libfreetype6-dev
+sudo apt-get install libjsoncpp-dev
+sudo apt-get install libmagick++-dev
+sudo apt-get install libopenshot-audio-dev
+sudo apt-get install libprotobuf-dev
+sudo apt-get install libqt5svg5-dev
+sudo apt-get install libswscale-dev
+sudo apt-get install libunittest++-dev
+sudo apt-get install libxcursor-dev
+sudo apt-get install libxinerama-dev
+sudo apt-get install libxrandr-dev
+sudo apt-get install python3-zmq
+sudo apt-get install libzmq3-dev
+sudo apt-get install pkg-config
+sudo apt-get install python3-dev
+sudo apt-get install protobuf-compiler
+sudo apt-get install qtbase5-dev
+sudo apt-get install libqt5svg5-dev
+sudo apt-get install libxcb-xfixes0-dev
+sudo apt-get install qtmultimedia5-dev
+sudo apt-get install swig
+
+
+###############################					 
+#ibopenshot-audio (Build Instructions)
+###############################
+
+cd libopenshot-audio
+
+# Tell CMake to examine the source tree in the current directory (./)
+# and write a configuration for it in a build subdirectory (build/)
+cmake -B build -S .
+
+# This has cmake compile all of the default build targets in build/
+cmake --build build
+
+# This should play a test sound
+./build/src/openshot-audio-demo
+
+# This tells CMake to install everything that was compiled in build/
+sudo cmake --install build
+
+###############################
+#libopenshot (Build Instructions)
+###############################
+
+cd libopenshot
+
+# Just like before, configure...
+# if not error then
+cmake -B build -S .
+# else
+cmake -B build -S . -DCMAKE_PREFIX_PATH=$HOME/Qt/5.15.2/gcc_64/
+
+
+# Build...
+cmake --build build
+
+# Test...
+cmake --build build --target test
+
+
+###############################
+#openshot-qt (Launch Instructions)
+###############################
+cd openshot-qt-SCE
+python3 src/launch.py
+```
+
+## Testing the installation
+
+```sh
+python3
+>>> import openshot
+>>> print(openshot.Version)
+0.3.2
+```
 
 ## Launch
 
@@ -119,6 +163,17 @@ cd [openshot-qt folder]
 PYTHONPATH=[libopenshot folder]/build/bindings/python \
 python3 src/launch.py
 ```
+
+## Schemas
+
+### Excel export
+![Alt text](doc/graphs/ExcelExport.png)
+---
+### Openshot-SCE structure
+![Alt text](doc/graphs/Openshot-SCE.png)
+---
+### Signal path for tags creation (from EventsManager to Timeline/MainWindow)
+![Alt text](doc/graphs/SignalPath.png)
 
 ## Websites
 
