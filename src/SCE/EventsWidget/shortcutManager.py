@@ -56,9 +56,8 @@ class ShortcutManager(QObject):
         self.tableWidget.setItem(row, self.columnShortcut, ItemShortcut(self, name))
 
     def remove(self, row) -> None :
-        itemShortcut = self.tableWidget.item(row, self.columnShortcut)
-        if itemShortcut :
-            itemShortcut.removeShortcutKey()
+        self.removeShortcutKey(row)
+        
 
     def removeShortcutKey(self, row) -> None:
         itemShortcut = self.tableWidget.item(row, self.columnShortcut)
