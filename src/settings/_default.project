@@ -63,8 +63,8 @@
       "lock": false
     },
     {
-      "id": "Analysis",
-      "label" : "Analysis",
+      "id": "VA",
+      "label" : "VA",
       "number": 1000000,
       "y": 0,
       "lock": false

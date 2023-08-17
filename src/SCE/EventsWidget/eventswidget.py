@@ -82,7 +82,7 @@ class EventsWidget(QWidget):
         header.setMaximumSectionSize(header.minimumSectionSize()*3)
         header.setSectionResizeMode(INDEX_COLUMN_DESCRIPTION, QHeaderView.ResizeMode.Stretch)
         self.ui.tableWidget.setSortingEnabled(True)
-        self.ui.tableWidget.sortByColumn(INDEX_COLUMN_CATEGORY, Qt.SortOrder.AscendingOrder)
+        self.ui.tableWidget.sortByColumn(INDEX_COLUMN_COLOR, Qt.SortOrder.AscendingOrder)
         self.ui.btn_RemoveCategory.setEnabled(False)
 
         # Add Connection
@@ -183,6 +183,11 @@ class EventsWidget(QWidget):
             return
         self.removeRow(rowIndex)
         self.detectSaveNeeded()
+
+    def clearEventList(self) :
+        for i in range(self.ui.tableWidget.rowCount()):
+            self.shortcutManager.remove(0)
+            self.removeRow(0)
 
     def importEventsManager(self, file_path) -> None:
         try :

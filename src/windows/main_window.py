@@ -345,6 +345,17 @@ class MainWindow(updates.UpdateWatcher, QMainWindow):
         # Update max size (for fast previews)
         self.MaxSizeChanged.emit(self.videoPreview.size())
 
+        # Check if the user wants to bring the events in the current project to the new project
+        ret = QMessageBox.question(
+                self,
+                _("Copy event list"),
+                _("Bring the events in the current project to the new project?"),
+                QMessageBox.No | QMessageBox.Yes)
+        if ret == QMessageBox.Yes:
+            # Event list is not cleared
+            return
+        self.EventsManager.clearEventList()
+
     def actionAnimatedTitle_trigger(self):
         # show dialog
         from windows.animated_title import AnimatedTitle
